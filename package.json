@@ -1,0 +1,12 @@
+{
+  "name": "thue-tncn",
+  "version": "2.0.0",
+  "description": "Ứng dụng tính thuế TNCN hàng tháng có tài khoản và lưu lịch sử",
+  "private": true,
+  "type": "commonjs",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test \"test/*.test.js\""
+  }
+}

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>Thuế Tháng</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap bar">
+    <a class="brand" href="/" aria-label="Thuế Tháng">
+      <img src="icon.svg" alt="" width="28" height="28"><span>Thuế Tháng</span>
+    </a>
+    <nav class="tabs" role="tablist">
+      <button role="tab" id="tab-calc" data-tab="calc" aria-selected="true">Tính thuế</button>
+      <button role="tab" id="tab-history" data-tab="history" aria-selected="false">Lịch sử</button>
+    </nav>
+    <div id="userArea" class="user"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- TÍNH THUẾ -->
+  <section id="view-calc" class="view">
+    <div class="grid">
+      <form id="form" class="card" autocomplete="off" novalidate>
+        <h2>Thông tin tháng</h2>
+        <div class="field">
+          <label for="month">Tháng</label>
+          <input id="month" type="month" required>
+          <p id="monthNote" class="hint" hidden></p>
+        </div>
+        <div class="field">
+          <label for="gross">Tổng thu nhập (VNĐ)</label>
+          <input id="gross" data-money inputmode="numeric" placeholder="VD: 30.000.000">
+        </div>
+        <div class="field">
+          <label for="exempt">Khoản không chịu thuế <span class="hint">phụ cấp ăn trưa, điện thoại…</span></label>
+          <input id="exempt" data-money inputmode="numeric" placeholder="0">
+        </div>
+        <div class="field">
+          <label for="dependents">Người phụ thuộc</label>
+          <div class="stepper">
+            <button type="button" id="depMinus" aria-label="Giảm">−</button>
+            <input id="dependents" type="number" min="0" max="50" step="1" value="0" inputmode="numeric">
+            <button type="button" id="depPlus" aria-label="Tăng">+</button>
+          </div>
+        </div>
+        <label class="switch">
+          <input id="hasIns" type="checkbox" checked>
+          <span>Đóng bảo hiểm bắt buộc <em>BHXH 8% · BHYT 1,5% · BHTN 1%</em></span>
+        </label>
+        <div class="field" id="insField">
+          <label for="insSalary">Lương đóng bảo hiểm <span class="hint">để trống = bằng tổng thu nhập</span></label>
+          <input id="insSalary" data-money inputmode="numeric" placeholder="Bằng tổng thu nhập">
+        </div>
+        <div class="field">
+          <label for="note">Ghi chú <span class="hint">không bắt buộc</span></label>
+          <input id="note" type="text" maxlength="200" placeholder="VD: có thưởng dự án">
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn primary" id="saveBtn">Lưu vào lịch sử</button>
+          <button type="button" class="btn ghost" id="resetBtn">Nhập lại</button>
+        </div>
+      </form>
+
+      <div class="results">
+        <div class="kpis">
+          <div class="kpi tax"><small>Thuế TNCN phải nộp</small><strong id="outTax">0 ₫</strong><span id="outRate" class="hint"></span></div>
+          <div class="kpi net"><small>Thực nhận</small><strong id="outNet">0 ₫</strong><span id="outNetPct" class="hint"></span></div>
+        </div>
+        <div class="card">
+          <h2>Diễn giải</h2>
+          <div id="breakdown" class="lines"></div>
+        </div>
+        <div class="card">
+          <h2>Thuế theo bậc</h2>
+          <div id="brackets" class="brackets"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LỊCH SỬ -->
+  <section id="view-history" class="view" hidden>
+    <div id="historyGate" class="card gate" hidden>
+      <h2>Đăng nhập để xem lịch sử</h2>
+      <p>Tài khoản giúp lưu thuế từng tháng và xem lại trên mọi thiết bị.</p>
+      <button class="btn primary" data-open-auth="login">Đăng nhập</button>
+      <button class="btn ghost" data-open-auth="register">Tạo tài khoản</button>
+    </div>
+    <div id="historyBody" hidden>
+      <div class="head">
+        <h2>Lịch sử thuế</h2>
+        <div class="head-tools">
+          <select id="yearSel" aria-label="Năm"></select>
+          <button class="btn ghost small" id="csvBtn">Xuất CSV</button>
+        </div>
+      </div>
+      <div class="kpis four" id="yearStats"></div>
+      <div class="card">
+        <h3>Thuế và thực nhận theo tháng</h3>
+        <div id="chart" class="chart"></div>
+        <div class="legend"><span><i class="dot tax"></i>Thuế</span><span><i class="dot net"></i>Thực nhận</span></div>
+      </div>
+      <div class="card">
+        <h3>Chi tiết</h3>
+        <div id="recordList" class="records"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ĐĂNG NHẬP / ĐĂNG KÝ -->
+<dialog id="authDlg">
+  <form method="dialog" id="authForm" class="dlg" autocomplete="on">
+    <div class="dlg-head">
+      <h2 id="authTitle">Đăng nhập</h2>
+      <button type="button" class="x" data-close aria-label="Đóng">×</button>
+    </div>
+    <div class="field" id="nameField" hidden>
+      <label for="authName">Tên hiển thị</label>
+      <input id="authName" autocomplete="name" maxlength="80">
+    </div>
+    <div class="field">
+      <label for="authEmail">Email</label>
+      <input id="authEmail" type="email" autocomplete="email" required>
+    </div>
+    <div class="field">
+      <label for="authPass">Mật khẩu <span class="hint" id="passHint"></span></label>
+      <input id="authPass" type="password" autocomplete="current-password" required minlength="8">
+    </div>
+    <p id="authErr" class="err" role="alert" hidden></p>
+    <button class="btn primary block" id="authSubmit" type="submit">Đăng nhập</button>
+    <p class="switch-mode"><span id="authSwitchText">Chưa có tài khoản?</span> <button type="button" class="link" id="authSwitch">Tạo tài khoản</button></p>
+  </form>
+</dialog>
+
+<!-- CÀI ĐẶT -->
+<dialog id="settingsDlg">
+  <form method="dialog" id="settingsForm" class="dlg">
+    <div class="dlg-head">
+      <h2>Cài đặt tài khoản</h2>
+      <button type="button" class="x" data-close aria-label="Đóng">×</button>
+    </div>
+    <h3>Mức giảm trừ &amp; trần bảo hiểm</h3>
+    <div class="field"><label for="setSelf">Giảm trừ bản thân / tháng</label><input id="setSelf" data-money inputmode="numeric"></div>
+    <div class="field"><label for="setDep">Giảm trừ mỗi người phụ thuộc / tháng</label><input id="setDep" data-money inputmode="numeric"></div>
+    <div class="field"><label for="setSI">Trần đóng BHXH, BHYT <span class="hint">20 × lương cơ sở</span></label><input id="setSI" data-money inputmode="numeric"></div>
+    <div class="field"><label for="setUI">Trần đóng BHTN <span class="hint">20 × lương tối thiểu vùng</span></label><input id="setUI" data-money inputmode="numeric"></div>
+    <p class="hint">Mức mới chỉ áp dụng cho các tháng bạn lưu từ nay về sau.</p>
+    <p id="settingsErr" class="err" role="alert" hidden></p>
+    <div class="actions">
+      <button class="btn primary" type="submit">Lưu cài đặt</button>
+      <button class="btn ghost" type="button" id="settingsDefault">Về mặc định</button>
+    </div>
+    <hr>
+    <h3>Đổi mật khẩu</h3>
+    <div class="field"><label for="pwCur">Mật khẩu hiện tại</label><input id="pwCur" type="password" autocomplete="current-password"></div>
+    <div class="field"><label for="pwNew">Mật khẩu mới</label><input id="pwNew" type="password" autocomplete="new-password" minlength="8"></div>
+    <button class="btn ghost" type="button" id="pwBtn">Đổi mật khẩu</button>
+    <hr>
+    <h3>Xóa tài khoản</h3>
+    <p class="hint">Xóa vĩnh viễn tài khoản và toàn bộ lịch sử. Không thể hoàn tác.</p>
+    <div class="field"><label for="delPass">Nhập mật khẩu để xác nhận</label><input id="delPass" type="password" autocomplete="current-password"></div>
+    <button class="btn danger" type="button" id="delBtn">Xóa tài khoản</button>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="tax.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
