@@ -329,7 +329,17 @@
       const help = el('button', 'btn', '❓ Hướng dẫn');
       help.onclick = () => this.show('help');
       const reset = el('button', 'btn red', '🗑 Xoá tiến trình');
-      reset.onclick = () => { if (window.confirm('Xoá toàn bộ tiến trình và chơi lại từ đầu?')) g.resetSave(); };
+      let armed = false;
+      reset.onclick = () => {
+        // xác nhận ngay trong trang (confirm() bị chặn trong khung artifact)
+        if (!armed) {
+          armed = true;
+          reset.textContent = 'Bấm lần nữa để xoá hết';
+          setTimeout(() => { armed = false; reset.textContent = '🗑 Xoá tiến trình'; }, 4000);
+          return;
+        }
+        g.resetSave();
+      };
       row.appendChild(help);
       row.appendChild(reset);
       sh.body.appendChild(row);
@@ -363,6 +373,7 @@
         🔄 Đạt Level yêu cầu để <b>Rebirth</b>: reset Speed nhưng nhận hệ số nhân vĩnh viễn.<br>
         ⚠️ Cẩn thận: khe nhảy dài dần, cầu <b>biến mất</b>, sàn di động, thanh quay, <b>Brainrot</b> đuổi, và <b>tia laser</b> (nấp sau khối lớn!). Rơi xuống biển chocolate sẽ về checkpoint gần nhất.<br>
         💡 Speed quá cao thì rất khó dừng — hãy <b>bấm nhẹ phím di chuyển</b> khi hạ cánh trên phím nhỏ.</p>
+        <p style="font-size:13px;opacity:.75">Bản fan-made không chính thức, không liên kết với SecretVerse Studio hay Roblox.</p>
         </div>`;
       const b = el('button', 'btn pink', 'Bắt đầu chơi!');
       b.style.width = '100%';

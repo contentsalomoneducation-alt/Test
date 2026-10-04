@@ -1,0 +1,3743 @@
+<title>+1 Speed Keyboard Escape</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #3b1f4a;
+  --pink: #ff6fa5;
+  --pink2: #ff9ec7;
+  --gold: #ffd23f;
+  --mint: #6df0b0;
+  --sky: #6cc4ff;
+  --violet: #b57bff;
+  --panel: #fff7fc;
+  --panel-line: #ffffff;
+  --shadow: 0 6px 0 rgba(59, 31, 74, 0.28);
+  --font: "Fredoka", "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden; background: #ffd6ec; color: var(--ink);
+  font-family: var(--font); font-weight: 600; user-select: none; -webkit-user-select: none;
+  touch-action: none; overscroll-behavior: none;
+}
+canvas#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; cursor: grab; }
+canvas#c:active { cursor: grabbing; }
+
+/* chữ viền kiểu Roblox */
+.stroke { color: #fff; text-shadow: -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink), 2px 2px 0 var(--ink), 0 3px 0 var(--ink); }
+
+#hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+#hud > * { pointer-events: none; }
+#hud button, #hud .click { pointer-events: auto; }
+
+/* ---- thống kê trái ---- */
+#stats {
+  position: absolute; left: max(12px, env(safe-area-inset-left)); top: max(12px, env(safe-area-inset-top));
+  display: flex; flex-direction: column; gap: 8px;
+}
+.pill {
+  display: flex; align-items: center; gap: 10px; min-width: 176px; padding: 6px 16px 6px 8px;
+  border-radius: 999px; border: 3px solid #fff; box-shadow: var(--shadow);
+  background: linear-gradient(180deg, var(--c1), var(--c2));
+}
+.pill .ic {
+  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-size: 22px;
+  background: rgba(255, 255, 255, 0.55); border: 2px solid rgba(255, 255, 255, 0.9);
+}
+.pill .tx { display: flex; flex-direction: column; line-height: 1; }
+.pill .lb { font-size: 11px; letter-spacing: 0.08em; opacity: 0.8; text-transform: uppercase; color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
+.pill .v { font-size: 26px; font-weight: 700; margin-top: 2px; }
+#pSpeed { --c1: #ff9ec7; --c2: #ff5f9f; }
+#pWins { --c1: #ffe27a; --c2: #ffb703; }
+#pReb { --c1: #b9a0ff; --c2: #8a5cff; }
+#stepInfo {
+  font-size: 13px; padding: 4px 12px; border-radius: 12px; background: rgba(59, 31, 74, 0.72); color: #fff; width: fit-content;
+}
+
+/* ---- level bar ---- */
+#lvl {
+  position: absolute; left: 50%; top: max(12px, env(safe-area-inset-top)); transform: translateX(-50%);
+  width: min(520px, 46vw); text-align: center;
+}
+#lvlRow { display: flex; align-items: center; gap: 8px; }
+#lvlText { font-size: 22px; min-width: 64px; text-align: left; }
+#lvlBarWrap {
+  flex: 1; height: 22px; background: rgba(59, 31, 74, 0.55); border: 3px solid #fff; border-radius: 999px; overflow: hidden;
+  box-shadow: var(--shadow); position: relative;
+}
+#lvlBar { height: 100%; width: 0%; background: linear-gradient(90deg, #6df0b0, #ffe27a, #ff6fa5); border-radius: 999px; transition: width 0.15s; }
+#lvlNext { font-size: 13px; margin-top: 6px; }
+#stageTag {
+  display: inline-block; margin-top: 8px; padding: 4px 16px; border-radius: 999px; background: rgba(59, 31, 74, 0.78);
+  color: #fff; font-size: 14px; border: 2px solid rgba(255, 255, 255, 0.85);
+}
+#stageTag b { color: var(--gold); }
+
+/* ---- menu phải ---- */
+#menu {
+  position: absolute; right: max(12px, env(safe-area-inset-right)); top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.mbtn {
+  width: 78px; padding: 8px 4px 6px; border-radius: 18px; border: 3px solid #fff; box-shadow: var(--shadow);
+  background: linear-gradient(180deg, var(--c1), var(--c2)); color: #fff; font-family: var(--font); font-weight: 700; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 13px; position: relative;
+  text-shadow: 0 2px 0 rgba(59, 31, 74, 0.5);
+}
+.mbtn:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(59, 31, 74, 0.28); }
+.mbtn .e { font-size: 26px; line-height: 1; filter: drop-shadow(0 2px 0 rgba(59,31,74,.35)); }
+.mbtn kbd {
+  position: absolute; left: -6px; top: -6px; background: #fff; color: var(--ink); border-radius: 8px; padding: 0 6px; font: 700 12px var(--font);
+  border: 2px solid var(--ink); text-shadow: none;
+}
+.mbtn.dot::after {
+  content: "!"; position: absolute; right: -6px; top: -6px; width: 22px; height: 22px; border-radius: 50%; background: #ff3d71; color: #fff;
+  display: grid; place-items: center; font-size: 14px; border: 2px solid #fff; animation: pulse 0.9s infinite;
+}
+@keyframes pulse { 50% { transform: scale(1.2); } }
+#bShop { --c1: #ff9ec7; --c2: #ff4f93; }
+#bReb { --c1: #c9a6ff; --c2: #8a5cff; }
+#bStages { --c1: #7fe0ff; --c2: #2f9bff; }
+#bBoard { --c1: #ffe27a; --c2: #f59e0b; }
+#bSet { --c1: #b9c4d6; --c2: #7a8aa6; }
+
+/* ---- hint ---- */
+#hint {
+  position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+  font-size: 13px; padding: 6px 14px; border-radius: 999px; background: rgba(59, 31, 74, 0.6); color: #fff; white-space: nowrap;
+  opacity: 0.9; transition: opacity 0.6s;
+}
+body.touch #hint { display: none; }
+
+/* ---- toast / popup ---- */
+#toasts { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(560px, 92vw); }
+.toast {
+  padding: 8px 20px; border-radius: 16px; font-size: 20px; font-weight: 700; border: 3px solid #fff; box-shadow: var(--shadow);
+  background: linear-gradient(180deg, var(--c1, #ffe27a), var(--c2, #ffb703)); color: #fff; text-align: center;
+  text-shadow: 0 2px 0 rgba(59, 31, 74, 0.5); animation: toastIn 0.3s ease-out, toastOut 0.5s ease-in forwards; animation-delay: 0s, var(--life, 2.4s);
+}
+.toast.big { font-size: 34px; padding: 12px 28px; }
+.toast.bad { --c1: #ff7a8c; --c2: #e0334f; }
+.toast.good { --c1: #6df0b0; --c2: #1fb877; }
+.toast.info { --c1: #7fd6ff; --c2: #3b8bff; }
+.toast.purple { --c1: #c9a6ff; --c2: #8a5cff; }
+@keyframes toastIn { from { transform: translateY(-14px) scale(0.8); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes toastOut { to { transform: translateY(-10px); opacity: 0; } }
+#popups { position: absolute; inset: 0; overflow: hidden; }
+.pop {
+  position: absolute; font-size: 22px; font-weight: 700; color: #fff; white-space: nowrap; will-change: transform, opacity;
+  text-shadow: -2px -2px 0 #1f7a3c, 2px -2px 0 #1f7a3c, -2px 2px 0 #1f7a3c, 2px 2px 0 #1f7a3c, 0 3px 0 #1f7a3c;
+  animation: popUp 0.85s ease-out forwards; transform: translate(-50%, -50%);
+}
+.pop.gold { color: #fff3a8; text-shadow: -2px -2px 0 #8a5a00, 2px -2px 0 #8a5a00, -2px 2px 0 #8a5a00, 2px 2px 0 #8a5a00, 0 3px 0 #8a5a00; font-size: 26px; }
+@keyframes popUp { 0% { opacity: 0; margin-top: 8px; } 15% { opacity: 1; } 100% { opacity: 0; margin-top: -48px; } }
+
+#banner {
+  position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%); text-align: center; opacity: 0; pointer-events: none;
+}
+#banner.show { animation: banner 2.6s ease-out forwards; }
+#banner .s1 { font-size: 20px; letter-spacing: 0.25em; }
+#banner .s2 { font-size: clamp(34px, 7vw, 68px); line-height: 1.05; }
+@keyframes banner { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); } 20% { transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -62%) scale(1); } }
+
+#flash { position: fixed; inset: 0; pointer-events: none; z-index: 6; opacity: 0; background: #ff3d71; transition: opacity 0.35s; }
+#flash.on { opacity: 0.55; transition: none; }
+#fade { position: fixed; inset: 0; pointer-events: none; z-index: 7; opacity: 0; background: #fff; transition: opacity 0.35s; }
+#fade.on { opacity: 1; }
+
+/* ---- modal ---- */
+#modal { position: fixed; inset: 0; z-index: 20; display: none; place-items: center; background: rgba(40, 14, 56, 0.45); backdrop-filter: blur(3px); }
+#modal.open { display: grid; }
+.panel {
+  width: min(760px, 94vw); max-height: min(86vh, 720px); display: flex; flex-direction: column; background: var(--panel);
+  border: 5px solid #fff; border-radius: 26px; box-shadow: 0 10px 0 rgba(59, 31, 74, 0.35), 0 0 0 4px var(--ink); overflow: hidden;
+  animation: panelIn 0.22s ease-out; touch-action: pan-y;
+}
+@keyframes panelIn { from { transform: scale(0.88); opacity: 0; } to { transform: none; opacity: 1; } }
+.ph {
+  display: flex; align-items: center; justify-content: space-between; padding: 12px 18px;
+  background: linear-gradient(180deg, var(--h1, #ff9ec7), var(--h2, #ff4f93)); color: #fff;
+}
+.ph h2 { margin: 0; font-size: 28px; }
+.ph .x {
+  width: 40px; height: 40px; border-radius: 12px; border: 3px solid #fff; background: #ff4f6d; color: #fff; font: 700 22px var(--font);
+  cursor: pointer; box-shadow: 0 3px 0 rgba(59, 31, 74, 0.35);
+}
+.pb { padding: 14px 18px 18px; overflow: auto; -webkit-overflow-scrolling: touch; }
+.tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.tab {
+  padding: 8px 14px; border-radius: 14px; border: 3px solid #fff; background: #e6d8f0; color: var(--ink); font: 700 15px var(--font);
+  cursor: pointer; box-shadow: 0 3px 0 rgba(59, 31, 74, 0.2);
+}
+.tab.on { background: linear-gradient(180deg, #ffe27a, #ffb703); box-shadow: 0 3px 0 rgba(59, 31, 74, 0.3); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.card {
+  background: #fff; border: 3px solid #f0d6ee; border-radius: 18px; padding: 12px; display: flex; flex-direction: column; gap: 6px; position: relative;
+  box-shadow: 0 4px 0 rgba(59, 31, 74, 0.12);
+}
+.card.eq { border-color: #6df0b0; background: #effff7; }
+.card.lock { opacity: 0.65; }
+.card h3 { margin: 0; font-size: 17px; }
+.card .meta { font-size: 13px; opacity: 0.8; }
+.card .sw { height: 26px; border-radius: 10px; border: 2px solid rgba(59,31,74,.15); }
+.btn {
+  padding: 8px 12px; border-radius: 14px; border: 3px solid #fff; font: 700 16px var(--font); color: #fff; cursor: pointer;
+  background: linear-gradient(180deg, #6df0b0, #1fb877); text-shadow: 0 2px 0 rgba(59, 31, 74, 0.45); box-shadow: 0 4px 0 rgba(59, 31, 74, 0.3);
+}
+.btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(59, 31, 74, 0.3); }
+.btn.gold { background: linear-gradient(180deg, #ffe27a, #ffb703); }
+.btn.pink { background: linear-gradient(180deg, #ff9ec7, #ff4f93); }
+.btn.gray { background: linear-gradient(180deg, #c9c2d4, #9b93aa); }
+.btn.red { background: linear-gradient(180deg, #ff8a9a, #e0334f); }
+.btn[disabled] { filter: grayscale(0.7); opacity: 0.6; cursor: not-allowed; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 2px dashed #ecd9ec; }
+.row:last-child { border-bottom: 0; }
+.big { font-size: 38px; font-weight: 700; }
+.bar { height: 22px; background: #e9dcee; border: 3px solid #fff; border-radius: 999px; overflow: hidden; box-shadow: inset 0 2px 0 rgba(59,31,74,.15); }
+.bar > i { display: block; height: 100%; background: linear-gradient(90deg, #6df0b0, #ffe27a, #ff6fa5); border-radius: 999px; }
+.note { font-size: 13px; opacity: 0.75; margin: 6px 0; }
+table.rb { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.rb td, table.rb th { padding: 5px 8px; text-align: center; border-bottom: 1px solid #ecd9ec; }
+table.rb tr.cur td { background: #fff3c4; font-weight: 700; }
+table.rb tr.done td { opacity: 0.45; }
+.stage-card { overflow: hidden; padding: 0; }
+.stage-card .top { padding: 8px 12px; color: #fff; text-shadow: 0 2px 0 rgba(59,31,74,.5); font-weight: 700; display: flex; justify-content: space-between; }
+.stage-card .bd { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px; }
+input[type=range] { width: 100%; accent-color: #ff4f93; }
+.radio { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { padding: 8px 14px; border-radius: 14px; border: 3px solid #fff; background: #e6d8f0; font: 700 15px var(--font); cursor: pointer; color: var(--ink); box-shadow: 0 3px 0 rgba(59,31,74,.2); }
+.chip.on { background: linear-gradient(180deg, #6df0b0, #1fb877); color: #fff; text-shadow: 0 2px 0 rgba(59,31,74,.4); }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 15px; }
+.keys kbd { background: #fff; border: 2px solid var(--ink); border-bottom-width: 4px; border-radius: 8px; padding: 1px 9px; font: 700 14px var(--font); text-align: center; }
+.lbrow { display: grid; grid-template-columns: 34px 1fr 100px 90px; gap: 8px; padding: 7px 8px; align-items: center; border-radius: 12px; }
+.lbrow.me { background: #fff3c4; font-weight: 700; }
+.lbrow.hd { font-size: 12px; opacity: 0.65; text-transform: uppercase; }
+
+/* ---- touch ---- */
+#touch { position: fixed; inset: 0; z-index: 6; pointer-events: none; display: none; }
+body.touch #touch { display: block; }
+#stick {
+  position: absolute; left: max(22px, env(safe-area-inset-left)); bottom: max(26px, env(safe-area-inset-bottom)); width: 140px; height: 140px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28); border: 4px solid rgba(255, 255, 255, 0.75); pointer-events: auto; touch-action: none;
+}
+#knob { position: absolute; left: 50%; top: 50%; width: 62px; height: 62px; margin: -31px 0 0 -31px; border-radius: 50%; background: rgba(255, 111, 165, 0.9); border: 3px solid #fff; }
+#jumpBtn {
+  position: absolute; right: max(26px, env(safe-area-inset-right)); bottom: max(34px, env(safe-area-inset-bottom)); width: 96px; height: 96px; border-radius: 50%;
+  background: linear-gradient(180deg, #ffe27a, #ffb703); border: 4px solid #fff; color: #fff; font: 700 20px var(--font); pointer-events: auto; touch-action: none;
+  text-shadow: 0 2px 0 rgba(59,31,74,.5); box-shadow: var(--shadow);
+}
+body.touch #menu { top: 10px; transform: none; gap: 6px; }
+body.touch .mbtn { width: 46px; height: 46px; padding: 0; border-radius: 14px; font-size: 0; justify-content: center; }
+body.touch .mbtn .e { font-size: 22px; }
+body.touch .mbtn kbd { display: none; }
+body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right: -5px; top: -5px; }
+@media (max-height: 480px) {
+  #stats { gap: 5px; }
+  .pill { min-width: 118px; padding: 3px 12px 3px 5px; }
+  .pill .v { font-size: 18px; }
+  .pill .ic { width: 28px; height: 28px; font-size: 15px; }
+  #stepInfo { font-size: 11px; padding: 2px 8px; }
+  #stick { width: 116px; height: 116px; bottom: 16px; }
+  #knob { width: 50px; height: 50px; margin: -25px 0 0 -25px; }
+  #jumpBtn { width: 78px; height: 78px; bottom: 22px; font-size: 16px; }
+  #toasts { top: 30%; }
+  .toast { font-size: 15px; padding: 5px 14px; }
+  .toast.big { font-size: 24px; }
+  #lvlNext { font-size: 11px; margin-top: 3px; }
+  #lvlText { font-size: 15px; }
+  #lvlBarWrap { height: 16px; }
+  .panel { max-height: 94vh; }
+  .ph { padding: 8px 14px; }
+  .ph h2 { font-size: 22px; }
+  .pb { padding: 10px 14px 14px; }
+}
+
+/* ---- loading ---- */
+#loading { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: linear-gradient(180deg, #6cc4ff, #ffd6ec); transition: opacity 0.5s; text-align: center; }
+#loading.done { opacity: 0; pointer-events: none; }
+#loading h1 { font-size: clamp(36px, 8vw, 78px); margin: 0; line-height: 1; }
+#loading p { margin: 10px 0 0; font-size: 18px; color: #fff; text-shadow: 0 2px 0 rgba(59,31,74,.5); }
+.spin { width: 48px; height: 48px; margin: 22px auto 0; border-radius: 50%; border: 6px solid #fff; border-top-color: var(--pink); animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#err { position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 99; background: #3b1f4a; color: #ffd6ec; padding: 10px; border-radius: 12px; display: none; font: 13px monospace; white-space: pre-wrap; }
+
+@media (max-width: 760px) {
+  #lvl { width: 40vw; }
+  #lvlText { font-size: 16px; min-width: 46px; }
+  .pill { min-width: 132px; }
+  .pill .v { font-size: 20px; }
+  .pill .ic { width: 30px; height: 30px; font-size: 17px; }
+  #stageTag { font-size: 12px; }
+}
+
+</style>
+<canvas id="c" tabindex="0"></canvas>
+
+<div id="hud">
+  <div id="stats">
+    <div class="pill" id="pSpeed"><div class="ic">⚡</div><div class="tx"><span class="lb">Speed</span><span class="v stroke" id="vSpeed">0</span></div></div>
+    <div class="pill" id="pWins"><div class="ic">🏆</div><div class="tx"><span class="lb">Wins</span><span class="v stroke" id="vWins">0</span></div></div>
+    <div class="pill" id="pReb"><div class="ic">🔄</div><div class="tx"><span class="lb">Rebirths</span><span class="v stroke" id="vReb">0</span></div></div>
+    <div id="stepInfo">+1 / step</div>
+  </div>
+
+  <div id="lvl">
+    <div id="lvlRow">
+      <div id="lvlText" class="stroke">Lv 1</div>
+      <div id="lvlBarWrap"><div id="lvlBar"></div></div>
+    </div>
+    <div id="lvlNext" class="stroke"></div>
+    <div id="stageTag"></div>
+  </div>
+
+  <div id="menu">
+    <button class="mbtn click" id="bShop"><kbd>B</kbd><span class="e">🛒</span>Shop</button>
+    <button class="mbtn click" id="bReb"><kbd>R</kbd><span class="e">🔄</span>Rebirth</button>
+    <button class="mbtn click" id="bStages"><kbd>T</kbd><span class="e">🏁</span>Stages</button>
+    <button class="mbtn click" id="bBoard"><kbd>Tab</kbd><span class="e">📋</span>Top</button>
+    <button class="mbtn click" id="bSet"><kbd>Esc</kbd><span class="e">⚙️</span>Cài đặt</button>
+  </div>
+
+  <div id="toasts"></div>
+  <div id="popups"></div>
+  <div id="banner"><div class="s1 stroke" id="bn1"></div><div class="s2 stroke" id="bn2"></div></div>
+  <div id="hint">WASD / ←↑↓→ di chuyển · Space nhảy · Kéo chuột xoay camera · Lăn chuột hoặc I/O để zoom · Tab bảng xếp hạng</div>
+</div>
+
+<div id="touch">
+  <div id="stick"><div id="knob"></div></div>
+  <button id="jumpBtn">JUMP</button>
+</div>
+
+<div id="flash"></div>
+<div id="fade"></div>
+<div id="modal"></div>
+
+<div id="loading">
+  <div>
+    <h1 class="stroke">+1 Speed<br>Keyboard Escape</h1>
+    <p>Đang dựng bàn phím kẹo khổng lồ…</p>
+    <div class="spin"></div>
+  </div>
+</div>
+<div id="err"></div>
+
+<script>
+  window.addEventListener('error', function (e) {
+    var el = document.getElementById('err');
+    el.style.display = 'block';
+    el.textContent += (e.message || e.error) + ' @ ' + (e.filename || '') + ':' + (e.lineno || '') + '\n';
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
+<script>if(!window.THREE){var l=document.getElementById("loading");if(l)l.innerHTML="<div><h1>Không tải được Three.js</h1><p>Kiểm tra kết nối mạng rồi tải lại trang.</p></div>";}</script>
+<script>
+/* Tiện ích dùng chung: toán, RNG, định dạng số, lưu trữ, DOM, texture chữ */
+(function () {
+  'use strict';
+  const SKE = (window.SKE = window.SKE || {});
+  const U = (SKE.util = {});
+
+  U.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  U.lerp = (a, b, t) => a + (b - a) * t;
+  U.damp = (a, b, lambda, dt) => a + (b - a) * (1 - Math.exp(-lambda * dt));
+  U.approach = (v, target, delta) => (v < target ? Math.min(v + delta, target) : Math.max(v - delta, target));
+  U.angleDiff = (a, b) => {
+    let d = (b - a) % (Math.PI * 2);
+    if (d > Math.PI) d -= Math.PI * 2;
+    if (d < -Math.PI) d += Math.PI * 2;
+    return d;
+  };
+
+  // mulberry32
+  U.rng = (seed) => {
+    let a = seed >>> 0;
+    return function () {
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+
+  const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+  U.fmt = (n) => {
+    if (!isFinite(n)) return '∞';
+    if (n < 0) return '-' + U.fmt(-n);
+    if (n < 1000) {
+      if (Math.abs(n - Math.round(n)) < 1e-9) return String(Math.round(n));
+      return (Math.round(n * 10) / 10).toString();
+    }
+    const tier = Math.floor(Math.log10(n) / 3);
+    if (tier >= SUF.length) return n.toExponential(2).replace('+', '');
+    const v = n / Math.pow(10, tier * 3);
+    const dec = v < 10 ? 2 : v < 100 ? 1 : 0;
+    return parseFloat(v.toFixed(dec)).toString() + SUF[tier];
+  };
+  U.fmtInt = (n) => U.fmt(Math.floor(n));
+  U.fmtMult = (m) => '×' + U.fmt(m);
+
+  U.load = (key, fallback) => {
+    try {
+      const s = window.localStorage.getItem(key);
+      return s ? JSON.parse(s) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  };
+  U.save = (key, value) => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  U.$ = (sel, root) => (root || document).querySelector(sel);
+  U.el = (tag, cls, html) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html != null) e.innerHTML = html;
+    return e;
+  };
+
+  U.hex = (h) => new window.THREE.Color(h);
+
+  /** Canvas texture chữ (dùng cho sprite biển hiệu) */
+  U.textTexture = (text, o) => {
+    o = o || {};
+    const w = o.w || 512;
+    const h = o.h || 128;
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const g = c.getContext('2d');
+    const lines = Array.isArray(text) ? text : [text];
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.lineJoin = 'round';
+    const lh = h / lines.length;
+    lines.forEach((ln, i) => {
+      const sizeBase = (o.sizes && o.sizes[i]) || lh * 0.72;
+      let size = sizeBase;
+      g.font = `800 ${size}px ${SKE.FONT}`;
+      const maxW = w * 0.94;
+      const m = g.measureText(ln).width;
+      if (m > maxW) size = size * (maxW / m);
+      g.font = `800 ${size}px ${SKE.FONT}`;
+      const y = lh * (i + 0.5);
+      g.lineWidth = o.stroke != null ? o.stroke : size * 0.2;
+      g.strokeStyle = (o.strokeColors && o.strokeColors[i]) || o.strokeColor || '#3b1f4a';
+      g.strokeText(ln, w / 2, y);
+      g.fillStyle = (o.fills && o.fills[i]) || o.fill || '#ffffff';
+      g.fillText(ln, w / 2, y);
+    });
+    const tex = new window.THREE.CanvasTexture(c);
+    tex.colorSpace = window.THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
+    tex.userData = { canvas: c };
+    return tex;
+  };
+
+  SKE.FONT = '"Fredoka","Baloo 2","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif';
+})();
+
+</script>
+<script>
+/* Dữ liệu game: stage, upgrade, treadmill, trail, aura, rebirth, công thức tốc độ */
+(function () {
+  'use strict';
+  const SKE = (window.SKE = window.SKE || {});
+  const D = (SKE.data = {});
+
+  // ---- Vật lý (dùng chung để tính độ dài khe nhảy theo tốc độ khuyến nghị) ----
+  D.GRAVITY = 70;
+  D.JUMP_V = 24;
+  D.AIR_TIME = (2 * D.JUMP_V) / D.GRAVITY; // ≈ 0.686s
+
+  /** Tốc độ chạy (đơn vị/giây) theo điểm Speed — đường cong log nên vẫn "kiểm soát được" ở Speed khổng lồ */
+  D.moveSpeed = (pts) => Math.min(70, 9 + 5.5 * Math.log10(1 + Math.max(0, pts) / 3));
+
+  /** Level theo Speed: S(L) = 1.8 * (L-1)^2.4 */
+  D.levelFromSpeed = (pts) => 1 + Math.floor(Math.pow(Math.max(0, pts) / 1.8, 1 / 2.4));
+  D.speedForLevel = (L) => 1.8 * Math.pow(Math.max(0, L - 1), 2.4);
+
+  // ---- 13 Stage (World 1) ----
+  // wins: phần thưởng theo wiki; rec: Speed khuyến nghị (ước lượng để khe nhảy khớp tốc độ)
+  const S = (name, wins, rec, caps, deck, sky, fog, accent, extra) =>
+    Object.assign({ name, wins, rec, caps, deck, sky, fog, accent }, extra || {});
+
+  D.STAGES = [
+    S('Gummy Gateway', 1, 0, ['#ff8fb8', '#8be0a4', '#ffd36e', '#9ad7ff'], '#6b3f2e', ['#6cc4ff', '#ffe1f0'], '#ffe1f0', '#ff6fa5'),
+    S('Candy Cane Walk', 3, 50, ['#ff5d6c', '#ffffff', '#ff8e9a', '#f4f4f4'], '#a32d3a', ['#ff9ab0', '#fff0f3'], '#ffe6ea', '#ff4d6d'),
+    S('Chocolate Creek', 10, 300, ['#8a5a3c', '#c99a6e', '#f1d9b5', '#a8744a'], '#3f2416', ['#d9a679', '#f7e3cf'], '#f1dcc6', '#a3633a'),
+    S('Marshmallow Maze', 20, 1200, ['#ffe3f1', '#d9c8ff', '#fff6d6', '#c9f0ff'], '#8d6f9c', ['#b9a6ff', '#fff1fb'], '#f6e9ff', '#c59bff'),
+    S('Caramel Canyon', 60, 5000, ['#f3a847', '#e0802b', '#ffd28a', '#c76a1f'], '#5a3414', ['#ffb35c', '#ffe9c4'], '#ffe2b8', '#ff9a2e'),
+    S('Lollipop Ledge', 100, 20000, ['#ff4fa3', '#4fd1ff', '#ffe14f', '#8f6bff', '#5dff9f'], '#4a2d63', ['#6ee7ff', '#ffd6f5'], '#fbe0ff', '#ff4fa3'),
+    S('Fudge Falls', 150, 80000, ['#6a3f2a', '#2fc3b7', '#8b5a3f', '#26a59b'], '#2b170d', ['#2fc3b7', '#e5fff9'], '#d4f5ef', '#2fc3b7'),
+    S('Sprinkle Sprint', 300, 400000, ['#ff6b9a', '#ffd93d', '#6bcB77', '#4d96ff', '#c77dff'], '#5b3b73', ['#8fd3ff', '#fff4c9'], '#fff1d6', '#ffd93d'),
+    S('Truffle Tunnel', 500, 2000000, ['#5a3a78', '#ffcf5c', '#3d2653', '#e0a93b'], '#1e1030', ['#3b2a63', '#a98be0'], '#7e66b0', '#ffcf5c', { dark: true }),
+    S('Brainrot Boulevard', 1000, 10000000, ['#39ff88', '#b14dff', '#ff3df0', '#2de2ff'], '#14151f', ['#2a0f4a', '#7a2fb8'], '#5a2a8a', '#39ff88', { dark: true }),
+    S('Waffle Warp', 2500, 80000000, ['#e8b04a', '#d89a2e', '#f6cf7a', '#32e6ff'], '#5d3a12', ['#2ee6ff', '#fff2c2'], '#c8f5ff', '#32e6ff'),
+    S('Sugar Rush', 10000, 500000000, ['#ff2e93', '#2e8bff', '#ffffff', '#ff7ac2'], '#2a0f3f', ['#ff2e93', '#ffd0ec'], '#ffc2e6', '#ff2e93'),
+    S('Cocoa Crown', 25000, 5000000000, ['#ffd23f', '#7b4a2a', '#fff0b3', '#b8860b'], '#2b1608', ['#ffcf4d', '#fff7d6'], '#ffeeb8', '#ffd23f'),
+  ];
+
+  // khe nhảy: ~90% quãng bay ở Speed khuyến nghị
+  D.STAGES.forEach((st, i) => {
+    st.index = i;
+    st.recMove = D.moveSpeed(st.rec);
+    const reach = st.recMove * D.AIR_TIME * 0.9;
+    st.gap = Math.max(5, Math.round(reach * 2) / 2);
+  });
+
+  // ---- Step power (nút số trên hàng phím) ----
+  D.STEPS = [
+    { wins: 0, step: 1, key: '1' },
+    { wins: 3, step: 2, key: '2' },
+    { wins: 15, step: 3, key: '3' },
+    { wins: 100, step: 25, key: '4' },
+    { wins: 500, step: 50, key: '5' },
+    { wins: 2500, step: 100, key: '6' },
+    { wins: 15000, step: 250, key: '7' },
+    { wins: 50000, step: 500, key: '8' },
+  ];
+
+  // ---- Treadmill (trong game gốc mua bằng Robux; ở đây mua bằng Wins) ----
+  D.TREADMILLS = [
+    { id: 'choc', name: 'Chocolate Treadmill', mult: 1, cost: 0, color: '#b0693a', glow: '#ffb27a' },
+    { id: 'gold', name: 'Golden Treadmill', mult: 3, cost: 150, color: '#e0b030', glow: '#fff08a' },
+    { id: 'diamond', name: 'Diamond Treadmill', mult: 9, cost: 2500, color: '#3fc7e6', glow: '#bff6ff' },
+    { id: 'candy', name: 'Candy Treadmill', mult: 25, cost: 25000, color: '#ff5fa8', glow: '#ffc4e1' },
+    { id: 'admin', name: 'Admin Treadmill', mult: 100, cost: 250000, color: '#d62839', glow: '#ff9aa4' },
+  ];
+
+  // ---- Trails (wins) & Auras (wins) — hệ số là ước lượng ----
+  D.TRAILS = [
+    { id: 'green', name: 'Green Trail', mult: 1.25, cost: 500, color: ['#7dff7d', '#2ecc40'] },
+    { id: 'blue', name: 'Blue Trail', mult: 1.5, cost: 2500, color: ['#7dc8ff', '#2a7fff'] },
+    { id: 'purple', name: 'Purple Trail', mult: 2, cost: 10000, color: ['#d59bff', '#8a2be2'] },
+    { id: 'gold', name: 'Gold Trail', mult: 3, cost: 25000, color: ['#fff08a', '#ffb703'] },
+    { id: 'fire', name: 'Fire Trail', mult: 5, cost: 50000, color: ['#ffd23f', '#ff3b1f'] },
+    { id: 'rainbow', name: 'Rainbow Trail', mult: 8, cost: 100000, color: 'rainbow' },
+  ];
+  D.AURAS = [
+    { id: 'glow', name: 'Glow Aura', mult: 12, cost: 1e6, color: ['#fffbd0', '#ffe066'] },
+    { id: 'wind', name: 'Wind Aura', mult: 25, cost: 5e6, color: ['#e6fff5', '#8ef0d0'] },
+    { id: 'water', name: 'Water Aura', mult: 50, cost: 1e7, color: ['#9fe3ff', '#2f8cff'] },
+    { id: 'fire', name: 'Fire Aura', mult: 100, cost: 2.5e7, color: ['#ffe27a', '#ff4d1f'] },
+    { id: 'void', name: 'Void Aura', mult: 250, cost: 5e7, color: ['#b44bff', '#1a0033'] },
+    { id: 'godlike', name: 'Godlike Aura', mult: 1000, cost: 1e9, color: 'rainbow' },
+  ];
+
+  // ---- Rebirth: 20 mốc. R1 Lv15 ×1.5, R2 Lv25 ×2, R3 Lv40 ×2.5 … R20 Lv600 ≈ ×100B ----
+  D.REBIRTHS = [];
+  for (let k = 1; k <= 20; k++) {
+    let level;
+    let mult;
+    if (k === 1) { level = 15; mult = 1.5; }
+    else if (k === 2) { level = 25; mult = 2; }
+    else if (k === 3) { level = 40; mult = 2.5; }
+    else {
+      level = Math.round((40 + 560 * Math.pow((k - 3) / 17, 1.3)) / 5) * 5;
+      mult = 3.5 * Math.pow(4.5, k - 4);
+      const mag = Math.pow(10, Math.floor(Math.log10(mult)) - 1);
+      mult = Math.round(mult / mag) * mag; // làm tròn 2 chữ số có nghĩa
+    }
+    D.REBIRTHS.push({ n: k, level, mult });
+  }
+
+  // ---- Âm thanh bước chân ----
+  D.PACKS = [
+    { id: 'keyboard', name: 'Keyboard Click' },
+    { id: 'chocolate', name: 'Chocolate' },
+    { id: 'water', name: 'Water' },
+    { id: 'bubbles', name: 'Bubbles' },
+    { id: 'lava', name: 'Lava' },
+  ];
+
+  // ---- Leaderboard giả lập (bot) ----
+  D.BOTS = ['Noob_Slayer99', 'KeyboardKing', 'SpeedyGonzo', 'CandyRunner', 'xX_Brainrot_Xx', 'ChocoMilk', 'LunaDash'];
+})();
+
+</script>
+<script>
+/* Âm thanh tổng hợp bằng WebAudio (không cần file mp3) — ASMR click + SFX */
+(function () {
+  'use strict';
+  const SKE = (window.SKE = window.SKE || {});
+
+  let ctx = null;
+  let master = null;
+  let noiseBuf = null;
+  let volume = 0.7;
+  let pack = 'keyboard';
+  let lastStep = 0;
+
+  function init() {
+    if (ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try {
+      ctx = new AC();
+      master = ctx.createGain();
+      master.gain.value = volume;
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -14;
+      comp.ratio.value = 6;
+      master.connect(comp);
+      comp.connect(ctx.destination);
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    } catch (e) {
+      ctx = null;
+    }
+  }
+
+  function resume() {
+    init();
+    if (ctx && ctx.state === 'suspended') ctx.resume();
+  }
+
+  function tone(freq, type, attack, decay, peak, freqEnd, delay) {
+    if (!ctx) return;
+    const t = ctx.currentTime + (delay || 0);
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    if (freqEnd) o.frequency.exponentialRampToValueAtTime(Math.max(20, freqEnd), t + attack + decay);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
+    o.connect(g);
+    g.connect(master);
+    o.start(t);
+    o.stop(t + attack + decay + 0.05);
+  }
+
+  function noise(attack, decay, peak, ftype, ffreq, q, delay) {
+    if (!ctx) return;
+    const t = ctx.currentTime + (delay || 0);
+    const s = ctx.createBufferSource();
+    s.buffer = noiseBuf;
+    s.loop = true;
+    const f = ctx.createBiquadFilter();
+    f.type = ftype;
+    f.frequency.value = ffreq;
+    f.Q.value = q || 0.8;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
+    s.connect(f);
+    f.connect(g);
+    g.connect(master);
+    s.start(t, Math.random() * 0.5);
+    s.stop(t + attack + decay + 0.05);
+  }
+
+  const A = (SKE.audio = {
+    init,
+    resume,
+    get ready() { return !!ctx; },
+    setVolume(v) {
+      volume = v;
+      if (master) master.gain.value = v;
+    },
+    setPack(p) { pack = p; },
+
+    /** Tiếng bước chân (mỗi step) */
+    step(pitch) {
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      if (now - lastStep < 0.04) return;
+      lastStep = now;
+      const p = pitch || 1;
+      switch (pack) {
+        case 'chocolate':
+          tone(210 * p, 'sine', 0.003, 0.11, 0.55, 90 * p);
+          noise(0.003, 0.07, 0.2, 'lowpass', 700);
+          break;
+        case 'water':
+          tone(420 * p, 'sine', 0.006, 0.13, 0.38, 900 * p);
+          tone(840 * p, 'sine', 0.006, 0.08, 0.1, 1500 * p);
+          break;
+        case 'bubbles':
+          tone(700 * p, 'sine', 0.002, 0.06, 0.32, 1700 * p);
+          tone(1250 * p, 'sine', 0.002, 0.04, 0.1, 2200 * p, 0.015);
+          break;
+        case 'lava':
+          noise(0.01, 0.15, 0.45, 'lowpass', 380);
+          tone(95 * p, 'sawtooth', 0.01, 0.15, 0.16, 55 * p);
+          break;
+        default: // keyboard — thock + click
+          noise(0.001, 0.022, 0.5, 'highpass', 2600, 0.7);
+          tone(560 * p, 'square', 0.001, 0.04, 0.13, 300 * p);
+          tone(2300 * p, 'sine', 0.001, 0.018, 0.1);
+          tone(150 * p, 'sine', 0.002, 0.07, 0.35, 90 * p);
+      }
+    },
+    jump() { tone(300, 'sine', 0.005, 0.12, 0.22, 640); },
+    land() { noise(0.002, 0.06, 0.25, 'lowpass', 500); tone(120, 'sine', 0.002, 0.08, 0.3, 70); },
+    win() { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 'triangle', 0.005, 0.28, 0.32, 0, i * 0.075)); },
+    buy() { tone(880, 'square', 0.002, 0.07, 0.16); tone(1320, 'square', 0.002, 0.12, 0.16, 0, 0.07); },
+    deny() { tone(190, 'sawtooth', 0.003, 0.14, 0.2, 140); },
+    click() { tone(1000, 'sine', 0.002, 0.04, 0.12); },
+    levelUp() { [660, 880, 1100].forEach((f, i) => tone(f, 'sine', 0.004, 0.16, 0.25, 0, i * 0.06)); },
+    rebirth() {
+      tone(200, 'sawtooth', 0.02, 0.9, 0.2, 1600);
+      [523, 659, 784, 1047].forEach((f, i) => tone(f, 'triangle', 0.01, 0.6, 0.28, 0, 0.5 + i * 0.09));
+    },
+    die() { tone(520, 'square', 0.004, 0.32, 0.2, 90); noise(0.003, 0.12, 0.25, 'lowpass', 900); },
+    splash() { noise(0.004, 0.28, 0.4, 'lowpass', 1400); tone(240, 'sine', 0.004, 0.2, 0.25, 90); },
+    warn() { tone(1500, 'square', 0.002, 0.08, 0.1); },
+    laser() { noise(0.002, 0.25, 0.4, 'bandpass', 3000, 2); tone(1800, 'sawtooth', 0.002, 0.25, 0.2, 200); },
+    checkpoint() { tone(740, 'triangle', 0.004, 0.14, 0.22); tone(988, 'triangle', 0.004, 0.2, 0.22, 0, 0.08); },
+    vanish() { tone(340, 'triangle', 0.003, 0.12, 0.12, 160); },
+  });
+})();
+
+</script>
+<script>
+/* Thực thể động: sàn di động, cầu biến mất, thanh quay, brainrot, laser */
+(function () {
+  'use strict';
+  const SKE = window.SKE;
+  const THREE = window.THREE;
+  const U = SKE.util;
+  const E = (SKE.entities = {});
+
+  const mat = (color, o) => new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.55, metalness: 0.0 }, o || {}));
+
+  // ------------------------------------------------------------------ Mover
+  E.Mover = class {
+    constructor(mesh, box, a, b, period, phase) {
+      this.mesh = mesh;
+      this.box = box;
+      this.a = a;
+      this.b = b;
+      this.period = period;
+      this.phase = phase || 0;
+      this.hx = (box.x1 - box.x0) / 2;
+      this.hz = (box.z1 - box.z0) / 2;
+      this.cx = (a.x + b.x) / 2;
+      this.cz = (a.z + b.z) / 2;
+      this.update(0, 0);
+    }
+    update(dt, t) {
+      const s = 0.5 - 0.5 * Math.cos((t / this.period + this.phase) * Math.PI * 2);
+      const nx = this.a.x + (this.b.x - this.a.x) * s;
+      const nz = this.a.z + (this.b.z - this.a.z) * s;
+      this.box.dx = nx - this.cx;
+      this.box.dz = nz - this.cz;
+      this.cx = nx;
+      this.cz = nz;
+      this.box.x0 = nx - this.hx;
+      this.box.x1 = nx + this.hx;
+      this.box.z0 = nz - this.hz;
+      this.box.z1 = nz + this.hz;
+      this.mesh.position.x = nx;
+      this.mesh.position.z = nz;
+    }
+  };
+
+  // --------------------------------------------------------------- Vanisher
+  E.Vanisher = class {
+    constructor(mesh, box, audio) {
+      this.mesh = mesh;
+      this.box = box;
+      this.audio = audio;
+      this.state = 'idle';
+      this.timer = 0;
+      this.vy = 0;
+      this.baseX = mesh.position.x;
+      this.baseY = mesh.position.y;
+      this.baseZ = mesh.position.z;
+      this.delay = 0.7;
+    }
+    touch() {
+      if (this.state === 'idle') {
+        this.state = 'shake';
+        this.timer = 0;
+        this.audio.vanish();
+      }
+    }
+    update(dt) {
+      const m = this.mesh;
+      this.timer += dt;
+      switch (this.state) {
+        case 'shake':
+          m.position.x = this.baseX + (Math.random() - 0.5) * 0.18;
+          m.position.z = this.baseZ + (Math.random() - 0.5) * 0.18;
+          if (this.timer > this.delay) {
+            this.state = 'fall';
+            this.timer = 0;
+            this.vy = 0;
+            this.box.active = false;
+            m.position.x = this.baseX;
+            m.position.z = this.baseZ;
+          }
+          break;
+        case 'fall':
+          this.vy += 40 * dt;
+          m.position.y -= this.vy * dt;
+          m.scale.setScalar(Math.max(0.01, 1 - this.timer * 0.8));
+          if (this.timer > 1.1) {
+            this.state = 'hidden';
+            this.timer = 0;
+            m.visible = false;
+          }
+          break;
+        case 'hidden':
+          if (this.timer > 2.4) {
+            this.state = 'return';
+            this.timer = 0;
+            m.visible = true;
+            m.position.y = this.baseY;
+            m.scale.setScalar(0.01);
+          }
+          break;
+        case 'return': {
+          const k = Math.min(1, this.timer / 0.25);
+          m.scale.setScalar(Math.max(0.01, k));
+          if (k >= 1) {
+            this.state = 'idle';
+            this.box.active = true;
+            m.scale.setScalar(1);
+          }
+          break;
+        }
+        default:
+      }
+    }
+  };
+
+  // ---------------------------------------------------------------- Spinner
+  E.Spinner = class {
+    constructor(scene, x, y, z, halfLen, speed, color) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+      this.L = halfLen;
+      this.speed = speed;
+      this.ang = Math.random() * Math.PI * 2;
+      const g = (this.group = new THREE.Group());
+      g.position.set(x, y, z);
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.9, 1.0, 16), mat('#ffffff'));
+      pillar.position.y = 0.5;
+      pillar.castShadow = true;
+      g.add(pillar);
+      this.bar = new THREE.Group();
+      // thanh sọc kẹo
+      const segs = 7;
+      const len = (halfLen * 2) / segs;
+      for (let i = 0; i < segs; i++) {
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, len, 12), mat(i % 2 ? '#ffffff' : color));
+        m.rotation.z = Math.PI / 2;
+        m.position.set(-halfLen + len * (i + 0.5), 0.8, 0);
+        m.castShadow = true;
+        this.bar.add(m);
+      }
+      [-1, 1].forEach((s) => {
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.62, 14, 10), mat(color));
+        ball.position.set(s * halfLen, 0.8, 0);
+        ball.castShadow = true;
+        this.bar.add(ball);
+      });
+      g.add(this.bar);
+      scene.add(g);
+    }
+    update(dt) {
+      this.ang += this.speed * dt;
+      this.bar.rotation.y = this.ang;
+    }
+    hit(p) {
+      if (p.y > this.y + 1.45 || p.y + 2.1 < this.y + 0.3) return false;
+      const dx = p.x - this.x;
+      const dz = p.z - this.z;
+      const ux = Math.cos(this.ang);
+      const uz = -Math.sin(this.ang);
+      const t = U.clamp(dx * ux + dz * uz, -this.L, this.L);
+      const px = ux * t - dx;
+      const pz = uz * t - dz;
+      return px * px + pz * pz < 0.85 * 0.85;
+    }
+  };
+
+  // -------------------------------------------------------------- Brainrot
+  const STYLE_COLORS = ['#ff4fd8', '#39ff88', '#ffb703', '#4dd2ff'];
+
+  function buildBrainrot(style, color) {
+    const g = new THREE.Group();
+    const body = mat(color, { roughness: 0.4, emissive: color, emissiveIntensity: 0.15 });
+    const white = mat('#ffffff', { roughness: 0.2 });
+    const black = mat('#15121c', { roughness: 0.3 });
+    const parts = { legs: [], arms: [] };
+    let eyeY = 1.9;
+    let eyeZ = 0.7;
+    let eyeX = 0.42;
+    if (style === 0) {
+      const b = new THREE.Mesh(new THREE.SphereGeometry(1.15, 20, 14), body);
+      b.scale.set(1, 1.08, 1);
+      b.position.y = 1.35;
+      g.add(b);
+      parts.body = b;
+      eyeY = 1.9;
+      eyeZ = 0.95;
+    } else if (style === 1) {
+      const b = new THREE.Mesh(new THREE.CapsuleGeometry(0.8, 1.5, 6, 14), body);
+      b.position.y = 1.7;
+      g.add(b);
+      parts.body = b;
+      const hat = new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.9, 12), mat('#ff3d71'));
+      hat.position.y = 3.15;
+      g.add(hat);
+      eyeY = 2.3;
+      eyeZ = 0.62;
+    } else {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.7, 1.8), body);
+      b.position.y = 1.35;
+      g.add(b);
+      parts.body = b;
+      [-0.55, 0.55].forEach((x) => {
+        const st = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.7, 6), black);
+        st.position.set(x, 2.45, 0.3);
+        g.add(st);
+      });
+      eyeY = 2.85;
+      eyeZ = 0.3;
+      eyeX = 0.55;
+    }
+    // mắt
+    parts.pupils = [];
+    [-1, 1].forEach((s) => {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.4, 14, 12), white);
+      eye.position.set(s * eyeX, eyeY, eyeZ);
+      g.add(eye);
+      const pu = new THREE.Mesh(new THREE.SphereGeometry(0.19, 10, 8), black);
+      pu.position.set(s * eyeX, eyeY, eyeZ + 0.3);
+      g.add(pu);
+      parts.pupils.push(pu);
+    });
+    // miệng + răng
+    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.28, 0.2), black);
+    mouth.position.set(0, eyeY - 0.75, eyeZ + (style === 0 ? 0.05 : 0.15));
+    g.add(mouth);
+    for (let i = -1; i <= 1; i += 2) {
+      const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.2, 0.12), white);
+      tooth.position.set(i * 0.25, eyeY - 0.62, eyeZ + (style === 0 ? 0.13 : 0.23));
+      g.add(tooth);
+    }
+    // chân
+    [-0.5, 0.5].forEach((x) => {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.55, 8), black);
+      leg.position.set(x, 0.3, 0);
+      g.add(leg);
+      parts.legs.push(leg);
+    });
+    // tay
+    if (style !== 0) {
+      [-1, 1].forEach((s) => {
+        const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.0, 6), body);
+        arm.position.set(s * (style === 1 ? 1.05 : 1.25), 1.4, 0);
+        arm.rotation.z = s * 0.6;
+        g.add(arm);
+        parts.arms.push(arm);
+      });
+    }
+    g.traverse((o) => {
+      if (o.isMesh) o.castShadow = true;
+    });
+    g.userData = parts;
+    return g;
+  }
+
+  E.Brainrot = class {
+    /**
+     * base: tâm đường tuần tra, axis: hướng tuần tra (đơn vị), half: nửa độ dài tuần tra,
+     * perpMax: biên theo trục vuông góc (khi đuổi theo)
+     */
+    constructor(scene, base, axis, half, perpMax, speed, style, chase, seed) {
+      this.base = base; // {x,y,z}
+      this.axis = axis; // {x,z}
+      this.perp = { x: -axis.z, z: axis.x };
+      this.half = half;
+      this.perpMax = perpMax;
+      this.speed = speed;
+      this.chase = chase;
+      this.chaseR = 13;
+      this.s = (seed % 1) * half * 1.6 - half * 0.8;
+      this.o = 0;
+      this.dir = seed > 0.5 ? 1 : -1;
+      this.t = seed * 10;
+      this.model = buildBrainrot(style % 3, STYLE_COLORS[(style + ((seed * 4) | 0)) % STYLE_COLORS.length]);
+      this.y = base.y;
+      this.x = base.x;
+      this.z = base.z;
+      this.model.position.set(base.x, base.y, base.z);
+      this.yaw = 0;
+      this.mode = 'patrol';
+      scene.add(this.model);
+      this.apply();
+    }
+    apply() {
+      this.x = this.base.x + this.axis.x * this.s + this.perp.x * this.o;
+      this.z = this.base.z + this.axis.z * this.s + this.perp.z * this.o;
+      this.model.position.set(this.x, this.y + Math.abs(Math.sin(this.t * 7)) * 0.25, this.z);
+    }
+    update(dt, t, ctx) {
+      this.t += dt;
+      const p = ctx.player.pos;
+      const dx = p.x - this.x;
+      const dz = p.z - this.z;
+      const dist = Math.hypot(dx, dz);
+      const prevS = this.s;
+      const prevO = this.o;
+      const near = this.chase && dist < this.chaseR && Math.abs(p.y - this.y) < 3.5 && !ctx.player.invuln;
+      if (near) {
+        this.mode = 'chase';
+        const ps = (p.x - this.base.x) * this.axis.x + (p.z - this.base.z) * this.axis.z;
+        const po = (p.x - this.base.x) * this.perp.x + (p.z - this.base.z) * this.perp.z;
+        const sp = this.speed * 1.2 * dt;
+        this.s = U.clamp(U.approach(this.s, U.clamp(ps, -this.half, this.half), sp), -this.half, this.half);
+        this.o = U.clamp(U.approach(this.o, U.clamp(po, -this.perpMax, this.perpMax), sp), -this.perpMax, this.perpMax);
+      } else {
+        this.mode = 'patrol';
+        this.s += this.dir * this.speed * dt;
+        if (this.s > this.half) { this.s = this.half; this.dir = -1; }
+        if (this.s < -this.half) { this.s = -this.half; this.dir = 1; }
+        this.o = U.approach(this.o, 0, this.speed * 0.6 * dt);
+      }
+      const mx = (this.s - prevS) * this.axis.x + (this.o - prevO) * this.perp.x;
+      const mz = (this.s - prevS) * this.axis.z + (this.o - prevO) * this.perp.z;
+      if (mx * mx + mz * mz > 1e-8) {
+        const target = Math.atan2(mx, mz);
+        this.yaw += U.angleDiff(this.yaw, target) * Math.min(1, dt * 10);
+      }
+      this.model.rotation.y = this.yaw;
+      this.apply();
+      // animation
+      const ud = this.model.userData;
+      const sw = Math.sin(this.t * 14) * 0.5;
+      ud.legs.forEach((l, i) => { l.position.z = (i ? 1 : -1) * sw * 0.5; });
+      ud.arms.forEach((a, i) => { a.rotation.x = (i ? 1 : -1) * sw * 1.2; });
+      if (ud.body) ud.body.scale.y = (ud.body.userData.sy || (ud.body.userData.sy = ud.body.scale.y)) * (1 + Math.sin(this.t * 9) * 0.04);
+    }
+    hit(p) {
+      const dx = p.x - this.x;
+      const dz = p.z - this.z;
+      if (dx * dx + dz * dz > 1.35 * 1.35) return false;
+      return p.y < this.y + 2.55 && p.y + 2.0 > this.y;
+    }
+  };
+
+  // ------------------------------------------------------------------ Laser
+  function segHitsBox(ax, ay, az, bx, by, bz, b) {
+    // slab method
+    let t0 = 0;
+    let t1 = 1;
+    const d = [bx - ax, by - ay, bz - az];
+    const o = [ax, ay, az];
+    const mn = [b.x0, b.y0, b.z0];
+    const mx = [b.x1, b.y1, b.z1];
+    for (let i = 0; i < 3; i++) {
+      if (Math.abs(d[i]) < 1e-9) {
+        if (o[i] < mn[i] || o[i] > mx[i]) return false;
+      } else {
+        let ta = (mn[i] - o[i]) / d[i];
+        let tb = (mx[i] - o[i]) / d[i];
+        if (ta > tb) { const tmp = ta; ta = tb; tb = tmp; }
+        t0 = Math.max(t0, ta);
+        t1 = Math.min(t1, tb);
+        if (t0 > t1) return false;
+      }
+    }
+    return true;
+  }
+  E.segHitsBox = segHitsBox;
+
+  E.Laser = class {
+    constructor(scene, pos, baseYaw, sweepAmp, sweepSpeed, range, covers, phase) {
+      this.pos = pos; // vị trí chân trụ
+      this.baseYaw = baseYaw;
+      this.amp = sweepAmp;
+      this.spd = sweepSpeed;
+      this.range = range;
+      this.covers = covers;
+      this.phase = phase || 0;
+      this.cone = 0.5;
+      this.eyeH = 6.5;
+      this.lock = 0;
+      this.state = 'scan';
+      this.stateT = 0;
+      this.yaw = baseYaw;
+      this.warned = 0;
+
+      const g = (this.group = new THREE.Group());
+      g.position.set(pos.x, pos.y, pos.z);
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.2, this.eyeH, 12), mat('#2b2140'));
+      pole.position.y = this.eyeH / 2;
+      pole.castShadow = true;
+      g.add(pole);
+      this.head = new THREE.Group();
+      this.head.position.y = this.eyeH;
+      const shell = new THREE.Mesh(new THREE.SphereGeometry(1.5, 20, 14), mat('#3a2a5c', { roughness: 0.3 }));
+      shell.castShadow = true;
+      this.head.add(shell);
+      this.eyeMat = new THREE.MeshStandardMaterial({ color: '#ff2b2b', emissive: '#ff0000', emissiveIntensity: 0.6 });
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.75, 14, 10), this.eyeMat);
+      eye.position.set(0, 0, 1.0);
+      this.head.add(eye);
+      g.add(this.head);
+
+      // hình quạt dò quét trên mặt sàn
+      const shape = new THREE.Shape();
+      shape.moveTo(0, 0);
+      const n = 18;
+      for (let i = 0; i <= n; i++) {
+        const a = -this.cone + (2 * this.cone * i) / n;
+        shape.lineTo(Math.sin(a) * range, Math.cos(a) * range);
+      }
+      shape.lineTo(0, 0);
+      const wedgeGeo = new THREE.ShapeGeometry(shape);
+      wedgeGeo.rotateX(-Math.PI / 2); // shape (x, y) -> (x, 0, -y) ; ta cần hướng +z => lật lại
+      wedgeGeo.scale(1, 1, -1);
+      this.wedgeMat = new THREE.MeshBasicMaterial({ color: '#ff3b3b', transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
+      this.wedge = new THREE.Mesh(wedgeGeo, this.wedgeMat);
+      this.wedge.position.set(0, 0.05, 0);
+      g.add(this.wedge);
+
+      // tia
+      this.beamMat = new THREE.MeshBasicMaterial({ color: '#ff3030', transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+      this.beam = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 10, 1, true), this.beamMat);
+      this.beam.visible = false;
+      scene.add(this.beam);
+      scene.add(g);
+    }
+    eyePos() { return { x: this.pos.x, y: this.pos.y + this.eyeH, z: this.pos.z }; }
+    blocked(ex, ey, ez, px, py, pz) {
+      for (let i = 0; i < this.covers.length; i++) {
+        if (segHitsBox(ex, ey, ez, px, py, pz, this.covers[i])) return true;
+      }
+      return false;
+    }
+    setBeam(ex, ey, ez, px, py, pz, radius, opacity) {
+      const dx = px - ex;
+      const dy = py - ey;
+      const dz = pz - ez;
+      const len = Math.hypot(dx, dy, dz);
+      this.beam.visible = opacity > 0.01;
+      this.beamMat.opacity = opacity;
+      this.beam.position.set((ex + px) / 2, (ey + py) / 2, (ez + pz) / 2);
+      this.beam.scale.set(radius, len, radius);
+      this.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dx / len, dy / len, dz / len));
+    }
+    update(dt, t, ctx) {
+      const p = ctx.player.pos;
+      const e = this.eyePos();
+      const chestY = p.y + 1.1;
+      this.stateT += dt;
+      const sweep = this.baseYaw + this.amp * Math.sin(t * this.spd + this.phase);
+      const dx = p.x - e.x;
+      const dz = p.z - e.z;
+      const dist = Math.hypot(dx, dz);
+      const angTo = Math.atan2(dx, dz);
+      const inCone = Math.abs(U.angleDiff(sweep, angTo)) < this.cone && dist < this.range;
+      const visible = inCone && !ctx.player.invuln && !this.blocked(e.x, e.y, e.z, p.x, chestY, p.z);
+
+      if (this.state === 'scan') {
+        this.yaw += U.angleDiff(this.yaw, sweep) * Math.min(1, dt * 8);
+        if (visible) {
+          this.lock += dt;
+          if (this.lock > 0.12 && this.warned < Math.floor(this.lock / 0.25) + 1) {
+            this.warned = Math.floor(this.lock / 0.25) + 1;
+            ctx.audio.warn();
+          }
+          this.setBeam(e.x, e.y, e.z, p.x, chestY, p.z, 0.07, Math.min(0.8, this.lock * 0.9));
+        } else {
+          this.lock = Math.max(0, this.lock - dt * 1.2);
+          this.warned = 0;
+          this.beam.visible = false;
+        }
+        if (this.lock >= 0.8) {
+          this.state = 'fire';
+          this.stateT = 0;
+          this.lock = 0;
+          this.warned = 0;
+          ctx.audio.laser();
+          if (visible) ctx.kill('laser');
+          this.fireTarget = { x: p.x, y: chestY, z: p.z };
+        }
+      } else if (this.state === 'fire') {
+        const ft = this.fireTarget;
+        this.yaw += U.angleDiff(this.yaw, Math.atan2(ft.x - e.x, ft.z - e.z)) * Math.min(1, dt * 20);
+        this.setBeam(e.x, e.y, e.z, ft.x, ft.y, ft.z, 0.45 * (1 - this.stateT / 0.35), 0.9);
+        if (this.stateT > 0.35) {
+          this.state = 'cool';
+          this.stateT = 0;
+          this.beam.visible = false;
+        }
+      } else {
+        this.beam.visible = false;
+        this.yaw += U.angleDiff(this.yaw, sweep) * Math.min(1, dt * 4);
+        if (this.stateT > 1.2) { this.state = 'scan'; this.stateT = 0; }
+      }
+      this.head.rotation.y = this.yaw;
+      this.wedge.rotation.y = this.yaw;
+      const warn = this.state === 'fire' ? 1 : Math.min(1, this.lock / 0.8);
+      this.eyeMat.emissiveIntensity = 0.5 + warn * 2.5;
+      this.wedgeMat.opacity = 0.14 + warn * 0.3;
+    }
+  };
+})();
+
+</script>
+<script>
+/* Thế giới: bàn phím kẹo khổng lồ, 13 stage, lobby, vật cản, lưới va chạm */
+(function () {
+  'use strict';
+  const SKE = window.SKE;
+  const THREE = window.THREE;
+  const U = SKE.util;
+  const D = SKE.data;
+  const E = SKE.entities;
+
+  const KU = 4.4; // bề rộng 1 phím
+  const KG = 0.5; // khe giữa các phím
+  const KP = KU + KG; // bước phím
+  const KH = 1.6; // chiều cao thân phím
+  const CAPH = 0.7; // chiều cao mũ phím
+  const SEA_Y = -14;
+  const KILL_Y = -17;
+
+  const HEAD = {
+    N: { f: [0, -1], r: [1, 0], yaw: 0 },
+    E: { f: [1, 0], r: [0, 1], yaw: -Math.PI / 2 },
+    W: { f: [-1, 0], r: [0, -1], yaw: Math.PI / 2 },
+  };
+
+  // ============================================================ Geometry builder
+  class GB {
+    constructor() {
+      this.p = [];
+      this.n = [];
+      this.c = [];
+      this.u = [];
+      this.i = [];
+      this.v = 0;
+    }
+    quad(a, b, c, d, col, ctr) {
+      let e1x = b[0] - a[0], e1y = b[1] - a[1], e1z = b[2] - a[2];
+      let e2x = d[0] - a[0], e2y = d[1] - a[1], e2z = d[2] - a[2];
+      let nx = e1y * e2z - e1z * e2y;
+      let ny = e1z * e2x - e1x * e2z;
+      let nz = e1x * e2y - e1y * e2x;
+      const l = Math.hypot(nx, ny, nz) || 1;
+      nx /= l; ny /= l; nz /= l;
+      if (ctr) {
+        const mx = (a[0] + b[0] + c[0] + d[0]) / 4 - ctr[0];
+        const my = (a[1] + b[1] + c[1] + d[1]) / 4 - ctr[1];
+        const mz = (a[2] + b[2] + c[2] + d[2]) / 4 - ctr[2];
+        if (nx * mx + ny * my + nz * mz < 0) {
+          const t = b; b = d; d = t;
+          nx = -nx; ny = -ny; nz = -nz;
+        }
+      }
+      const v0 = this.v;
+      [a, b, c, d].forEach((q) => {
+        this.p.push(q[0], q[1], q[2]);
+        this.n.push(nx, ny, nz);
+        this.c.push(col.r, col.g, col.b);
+      });
+      this.i.push(v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3);
+      this.v += 4;
+    }
+    /** Khối (có thể vát: i0 = thụt đáy, i1 = thụt đỉnh), không có mặt đáy */
+    solid(x0, y0, z0, x1, y1, z1, i0, i1, col) {
+      const b = [
+        [x0 + i0, y0, z0 + i0], [x1 - i0, y0, z0 + i0], [x1 - i0, y0, z1 - i0], [x0 + i0, y0, z1 - i0],
+      ];
+      const t = [
+        [x0 + i1, y1, z0 + i1], [x1 - i1, y1, z0 + i1], [x1 - i1, y1, z1 - i1], [x0 + i1, y1, z1 - i1],
+      ];
+      const ctr = [(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2];
+      for (let k = 0; k < 4; k++) this.quad(b[k], b[(k + 1) % 4], t[(k + 1) % 4], t[k], col, ctr);
+      this.quad(t[0], t[1], t[2], t[3], col, ctr);
+    }
+    /** Nhãn chữ trên mặt phím (quad phẳng, UV theo atlas) */
+    label(cx, cy, cz, s, f, r, gi, col) {
+      const N = 8;
+      const cu = gi % N;
+      const cv = Math.floor(gi / N);
+      const u0 = cu / N, u1 = (cu + 1) / N;
+      const v1 = 1 - cv / N, v0 = 1 - (cv + 1) / N;
+      const pts = [
+        [cx - r[0] * s - f[0] * s, cy, cz - r[1] * s - f[1] * s, u0, v0],
+        [cx + r[0] * s - f[0] * s, cy, cz + r[1] * s - f[1] * s, u1, v0],
+        [cx + r[0] * s + f[0] * s, cy, cz + r[1] * s + f[1] * s, u1, v1],
+        [cx - r[0] * s + f[0] * s, cy, cz - r[1] * s + f[1] * s, u0, v1],
+      ];
+      const v0i = this.v;
+      pts.forEach((q) => {
+        this.p.push(q[0], q[1], q[2]);
+        this.n.push(0, 1, 0);
+        this.c.push(col.r, col.g, col.b);
+        this.u.push(q[3], q[4]);
+      });
+      this.i.push(v0i, v0i + 1, v0i + 2, v0i, v0i + 2, v0i + 3);
+      this.v += 4;
+    }
+    geometry(withUV) {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(this.p), 3));
+      g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(this.n), 3));
+      g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(this.c), 3));
+      if (withUV) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(this.u), 2));
+      g.setIndex(new THREE.BufferAttribute(new Uint32Array(this.i), 1));
+      g.computeBoundingSphere();
+      g.computeBoundingBox();
+      return g;
+    }
+  }
+
+  // ============================================================ Atlas chữ trên phím
+  const GLYPHS = [...'QWERTYUIOPASDFGHJKLZXCVBNM1234567890'].concat(['Tab', 'Alt', 'Fn', 'Esc', 'Shift', 'Enter', 'Caps', 'Ctrl', '⌫', 'WIN', '+1', '←', '↑', '↓', '→', '~', '!', '?', '$', 'SHOP', 'REB']);
+  function makeAtlas() {
+    const N = 8;
+    const C = 64;
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = N * C;
+    const g = cv.getContext('2d');
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillStyle = '#fff';
+    const idx = {};
+    GLYPHS.forEach((s, i) => {
+      idx[s] = i;
+      const cx = (i % N) * C + C / 2;
+      const cy = Math.floor(i / N) * C + C / 2 + 2;
+      let size = s.length === 1 ? 50 : 34;
+      g.font = `800 ${size}px ${SKE.FONT}`;
+      const w = g.measureText(s).width;
+      if (w > C - 8) {
+        size = (size * (C - 8)) / w;
+        g.font = `800 ${size}px ${SKE.FONT}`;
+      }
+      g.fillText(s, cx, cy);
+    });
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
+    return { tex, idx, canvas: cv };
+  }
+
+  // ============================================================ Lưới va chạm
+  class Grid {
+    constructor(cs) {
+      this.cs = cs;
+      this.m = new Map();
+      this.stamp = 0;
+    }
+    k(ix, iz) { return (ix + 4096) * 8192 + (iz + 4096); }
+    add(b) {
+      const cs = this.cs;
+      for (let ix = Math.floor(b.x0 / cs); ix <= Math.floor(b.x1 / cs); ix++) {
+        for (let iz = Math.floor(b.z0 / cs); iz <= Math.floor(b.z1 / cs); iz++) {
+          const key = this.k(ix, iz);
+          let l = this.m.get(key);
+          if (!l) { l = []; this.m.set(key, l); }
+          l.push(b);
+        }
+      }
+    }
+    query(x0, z0, x1, z1, out) {
+      const cs = this.cs;
+      this.stamp++;
+      for (let ix = Math.floor(x0 / cs); ix <= Math.floor(x1 / cs); ix++) {
+        for (let iz = Math.floor(z0 / cs); iz <= Math.floor(z1 / cs); iz++) {
+          const l = this.m.get(this.k(ix, iz));
+          if (!l) continue;
+          for (let i = 0; i < l.length; i++) {
+            const b = l[i];
+            if (b.stamp !== this.stamp) { b.stamp = this.stamp; out.push(b); }
+          }
+        }
+      }
+    }
+  }
+
+  // ============================================================ Builder cho 1 stage
+  const LETTERS = [...'QWERTYUIOPASDFGHJKLZXCVBNM'];
+  const W15 = ['Tab', 'Alt', 'Fn', 'Esc'];
+  const W2 = ['Shift', 'Enter', 'Caps', 'Ctrl', '⌫'];
+
+  class Builder {
+    constructor(world, sIdx, pal, start, seed) {
+      this.w = world;
+      this.s = sIdx;
+      this.pal = pal;
+      this.rng = U.rng(seed);
+      this.x = start.x;
+      this.y = start.y;
+      this.z = start.z;
+      this.head = 'N';
+      this.hd = HEAD.N;
+      this.plain = new GB();
+      this.labels = new GB();
+      this.boxes = [];
+      this.group = new THREE.Group();
+      this.bb = { x0: Infinity, x1: -Infinity, z0: Infinity, z1: -Infinity };
+      this.detourSign = 1;
+      this.ents = [];
+      this.capColors = pal.caps.map((h) => new THREE.Color(h));
+      this.deckColor = new THREE.Color(pal.deck);
+      this.lastCols = 3;
+      this.path = [];
+    }
+    mark(type, u, v, extra) {
+      const p = this.pt(u, v);
+      this.path.push(Object.assign({ t: type, x: p[0], y: this.y, z: p[1], hx: this.hd.f[0], hz: this.hd.f[1] }, extra || {}));
+    }
+    pt(u, v) {
+      const h = this.hd;
+      return [this.x + h.f[0] * u + h.r[0] * v, this.z + h.f[1] * u + h.r[1] * v];
+    }
+    rect(u0, u1, v0, v1) {
+      const a = this.pt(u0, v0);
+      const b = this.pt(u1, v1);
+      return { x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), z0: Math.min(a[1], b[1]), z1: Math.max(a[1], b[1]) };
+    }
+    advance(L) {
+      this.x += this.hd.f[0] * L;
+      this.z += this.hd.f[1] * L;
+    }
+    capColor() {
+      const c = this.capColors[(this.rng() * this.capColors.length) | 0].clone();
+      c.offsetHSL(0, 0, (this.rng() - 0.5) * 0.1);
+      return c;
+    }
+    labelFor(w) {
+      if (w >= 1.9) return W2[(this.rng() * W2.length) | 0];
+      if (w >= 1.4) return W15[(this.rng() * W15.length) | 0];
+      return LETTERS[(this.rng() * LETTERS.length) | 0];
+    }
+    partition(total) {
+      const out = [];
+      let r = total;
+      while (r > 1e-6) {
+        const opts = [1, 1, 1, 1, 1.5, 2].filter((w) => w <= r + 1e-6 && (r - w < 1e-6 || r - w >= 1 - 1e-6));
+        const w = opts.length ? opts[(this.rng() * opts.length) | 0] : r;
+        out.push(w);
+        r -= w;
+      }
+      return out;
+    }
+    grow(r) {
+      this.bb.x0 = Math.min(this.bb.x0, r.x0);
+      this.bb.x1 = Math.max(this.bb.x1, r.x1);
+      this.bb.z0 = Math.min(this.bb.z0, r.z0);
+      this.bb.z1 = Math.max(this.bb.z1, r.z1);
+    }
+    /** Thêm 1 phím tĩnh (có va chạm). u/v là toạ độ cục bộ theo hướng đi. */
+    addKey(u0, u1, v0, v1, o) {
+      o = o || {};
+      const r = this.rect(u0, u1, v0, v1);
+      const top = this.y + (o.dy || 0);
+      const height = o.height || KH;
+      const bot = top - height;
+      const cap = o.cap || this.capColor();
+      const side = cap.clone().multiplyScalar(0.7);
+      const ps = this.plain.v;
+      this.plain.solid(r.x0, bot, r.z0, r.x1, top - CAPH, r.z1, 0, 0, side);
+      this.plain.solid(r.x0, top - CAPH, r.z0, r.x1, top, r.z1, 0.1, o.inset != null ? o.inset : 0.32, cap);
+      const pe = this.plain.v;
+      let lr = null;
+      const cx = (r.x0 + r.x1) / 2;
+      const cz = (r.z0 + r.z1) / 2;
+      if (o.label) {
+        const gi = this.w.atlas.idx[o.label];
+        if (gi != null) {
+          const ls = this.labels.v;
+          const s = o.labelSize || (o.label.length > 1 ? 1.25 : 1.0);
+          this.labels.label(cx, top + 0.03, cz, s, this.hd.f, this.hd.r, gi, cap.clone().multiplyScalar(0.45));
+          lr = [ls, this.labels.v];
+        }
+      }
+      const box = {
+        x0: r.x0, y0: bot, z0: r.z0, x1: r.x1, y1: top, z1: r.z1,
+        kind: o.kind || 'key', stage: this.s, pr: [ps, pe], lr, active: true, stamp: 0,
+        ck: o.ck || null, pad: o.pad || null,
+      };
+      this.w.addStatic(box);
+      this.boxes.push(box);
+      this.grow(r);
+      return box;
+    }
+    /** Hộp đế (trang trí, không va chạm) */
+    deck(u0, u1, v0, v1) {
+      const r = this.rect(u0, u1, v0, v1);
+      const m = 0.4;
+      this.plain.solid(r.x0 - m, this.y - KH - 0.7, r.z0 - m, r.x1 + m, this.y - 1.05, r.z1 + m, 0.3, 0, this.deckColor);
+    }
+    /** Mesh phím động (sàn di động / cầu biến mất) */
+    keyMesh(w, d, cap, label) {
+      const gb = new GB();
+      const lg = new GB();
+      const side = cap.clone().multiplyScalar(0.7);
+      gb.solid(-w / 2, -KH, -d / 2, w / 2, -CAPH, d / 2, 0, 0, side);
+      gb.solid(-w / 2, -CAPH, -d / 2, w / 2, 0, d / 2, 0.1, 0.32, cap);
+      const grp = new THREE.Group();
+      const m = new THREE.Mesh(gb.geometry(), this.w.plainMat);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      grp.add(m);
+      if (label && this.w.atlas.idx[label] != null) {
+        // dựng theo hệ trục N rồi xoay cả mesh theo hướng đi (xem vanish/mover)
+        lg.label(0, 0.03, 0, label.length > 1 ? 1.25 : 1.0, HEAD.N.f, HEAD.N.r, this.w.atlas.idx[label], cap.clone().multiplyScalar(0.45));
+        const lm = new THREE.Mesh(lg.geometry(true), this.w.labelMat);
+        lm.receiveShadow = true;
+        grp.add(lm);
+      }
+      return grp;
+    }
+
+    // ---------------------------------------------------------------- chunks
+    strip(L, cols, o) {
+      o = o || {};
+      const rows = Math.max(1, Math.round(L / KP));
+      const W = cols * KP;
+      this.lastCols = cols;
+      for (let r = 0; r < rows; r++) {
+        let v = -W / 2;
+        const ws = this.partition(cols);
+        ws.forEach((w) => {
+          const cell = w * KP;
+          const ck = o.ck && r === 0 ? o.ck : null;
+          this.addKey(r * KP + KG / 2, (r + 1) * KP - KG / 2, v + KG / 2, v + cell - KG / 2, { label: this.labelFor(w), ck, cap: o.cap ? o.cap() : null });
+          v += cell;
+        });
+      }
+      this.deck(0, rows * KP, -W / 2, W / 2);
+      this.mark('walk', Math.min(KP * 0.5, rows * KP - KG / 2), 0);
+      if (!o.noEnd) this.mark('walk', rows * KP - KG / 2 - 0.4, 0);
+      if (o.ck) {
+        const c = this.pt(KP * 0.5, 0);
+        o.ck.x = c[0]; o.ck.y = this.y + 0.1; o.ck.z = c[1]; o.ck.yaw = this.hd.yaw;
+        this.flag(this.pt(KP * 0.5, -W / 2 - 0.9), o.ck);
+      }
+      this.advance(rows * KP);
+    }
+    gapCell(G) {
+      this.mark('jump', -KG / 2, 0);
+      this.advance(Math.max(0.5, G - KG));
+    }
+    flag(pos, ck) {
+      const g = new THREE.Group();
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 7, 8), new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.4 }));
+      pole.position.y = 3.5;
+      pole.castShadow = true;
+      g.add(pole);
+      const cloth = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.6), new THREE.MeshStandardMaterial({ color: this.pal.accent, side: THREE.DoubleSide, roughness: 0.6 }));
+      cloth.position.set(1.4, 6.1, 0);
+      g.add(cloth);
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), new THREE.MeshStandardMaterial({ color: '#ffd23f', emissive: '#ffb703', emissiveIntensity: 0.4 }));
+      ball.position.y = 7.1;
+      g.add(ball);
+      g.position.set(pos[0], this.y, pos[1]);
+      this.group.add(g);
+      ck.flagMesh = cloth;
+    }
+    plaza() {
+      const cols = 9;
+      const rows = 6;
+      const W = cols * KP;
+      const lanes = [1, 4, 7];
+      const ck = { stage: this.s, plaza: true, x: 0, y: 0, z: 0, yaw: 0 };
+      const segs = [[0, 1], [2, 2], [5, 2], [8, 1]]; // [col bắt đầu, số cột] giữa các làn treadmill
+      for (let r = 0; r < rows; r++) {
+        const tread = r >= 1 && r <= 4;
+        const parts = tread ? segs : [[0, cols]];
+        parts.forEach(([c0, n]) => {
+          let v = -W / 2 + c0 * KP;
+          this.partition(n).forEach((w) => {
+            const cell = w * KP;
+            this.addKey(r * KP + KG / 2, (r + 1) * KP - KG / 2, v + KG / 2, v + cell - KG / 2, { label: this.labelFor(w), ck: r === 0 ? ck : null });
+            v += cell;
+          });
+        });
+      }
+      // treadmill
+      lanes.forEach((c) => {
+        const v0 = -W / 2 + c * KP + KG / 2;
+        const v1 = v0 + KU;
+        const u0 = 1 * KP + KG / 2;
+        const u1 = 5 * KP - KG / 2;
+        const box = this.addKey(u0, u1, v0, v1, { kind: 'treadmill', cap: new THREE.Color('#2a2a33'), label: null, inset: 0 });
+        box.belt = true;
+        const r = this.rect(u0, u1, v0, v1);
+        this.w.addBelt(this.group, r, this.y);
+      });
+      this.deck(0, rows * KP, -W / 2, W / 2);
+      const c = this.pt(KP * 0.5, 0);
+      ck.x = c[0]; ck.y = this.y + 0.1; ck.z = c[1]; ck.yaw = this.hd.yaw;
+      this.flag(this.pt(KP * 0.5, -W / 2 - 1.2), ck);
+      this.flag(this.pt(KP * 0.5, W / 2 + 1.2), ck);
+      // biển hiệu stage + treadmill
+      const st = D.STAGES[this.s];
+      if (st) {
+        const mid = this.pt(KP * 5.4, 0);
+        this.w.sprite(this.group, [`STAGE ${this.s + 1}`, st.name.toUpperCase(), `Win +${U.fmt(st.wins)}  •  Rec. Speed ${U.fmt(st.rec)}`],
+          { w: 30, h: 9.4, x: mid[0], y: this.y + 16, z: mid[1], tw: 1024, th: 320, fills: ['#ffffff', st.accent, '#ffffff'], sizes: [60, 110, 56] });
+      }
+      this.w.treadSign(this.group, this.pt(KP * 3, 0), this.y + 5.2);
+      this.w.plazaCk[this.s] = ck;
+      this.advance(rows * KP);
+      return ck;
+    }
+    stones(n, sz, jit) {
+      const size = sz * KP;
+      for (let i = 0; i < n; i++) {
+        this.gapCell(this.gap());
+        const off = (this.rng() * 2 - 1) * jit;
+        this.addKey(KG / 2, size - KG / 2, -size / 2 + KG / 2 + off, size / 2 - KG / 2 + off, { label: this.labelFor(sz) });
+        this.mark('walk', size / 2, off);
+        this.advance(size);
+      }
+      this.gapCell(this.gap());
+    }
+    gap() {
+      return D.STAGES[this.s] ? D.STAGES[this.s].gap : 5;
+    }
+    vanish(n, cols) {
+      const W = cols * KP;
+      for (let i = 0; i < n; i++) {
+        const cap = this.capColor();
+        const w = W - KG;
+        const d = KU;
+        const label = this.labelFor(1);
+        const mesh = this.keyMesh(w, d, cap, label);
+        const c = this.pt(KP / 2, 0);
+        mesh.position.set(c[0], this.y, c[1]);
+        mesh.rotation.y = this.hd.yaw;
+        const r = this.rect(KG / 2, KP - KG / 2, -W / 2 + KG / 2, W / 2 - KG / 2);
+        const box = { x0: r.x0, y0: this.y - KH, z0: r.z0, x1: r.x1, y1: this.y, z1: r.z1, kind: 'vanish', stage: this.s, active: true, stamp: 0, dyn: true };
+        this.group.add(mesh);
+        const ent = new E.Vanisher(mesh, box, SKE.audio);
+        ent.delay = Math.max(0.45, 0.8 - this.s * 0.03);
+        box.owner = ent;
+        this.w.dyn.push(box);
+        this.w.vanishers.push(ent);
+        this.ents.push(ent);
+        this.grow(r);
+        this.mark('walk', KP / 2, 0);
+        this.advance(KP);
+      }
+    }
+    mover(cols, spanMul) {
+      const G = Math.round(this.gap() * (spanMul || 1.7));
+      const w = cols * KP - KG;
+      const d = KU * (this.s >= 11 ? 2.8 : this.s >= 8 ? 2.2 : this.s >= 4 ? 1.7 : 1); // sàn to dần vì quán tính ở Speed cao
+      const near = 0.05 + d / 2;
+      const far = G - 0.05 - d / 2;
+      const a = this.pt(near, 0);
+      const b = this.pt(far, 0);
+      const cap = this.capColor();
+      const mesh = this.keyMesh(w, d, cap, this.labelFor(2));
+      mesh.rotation.y = this.hd.yaw;
+      mesh.position.set(a[0], this.y, a[1]);
+      const hw = this.head === 'N' ? w / 2 : d / 2;
+      const hd2 = this.head === 'N' ? d / 2 : w / 2;
+      const box = { x0: a[0] - hw, x1: a[0] + hw, z0: a[1] - hd2, z1: a[1] + hd2, y0: this.y - KH, y1: this.y, kind: 'mover', stage: this.s, active: true, stamp: 0, dyn: true, dx: 0, dz: 0 };
+      this.group.add(mesh);
+      const speed = 5.5 + this.s * 0.9;
+      const period = (2 * Math.abs(far - near)) / speed;
+      const ent = new E.Mover(mesh, box, { x: a[0], z: a[1] }, { x: b[0], z: b[1] }, period, this.rng());
+      box.owner = ent;
+      this.w.dyn.push(box);
+      this.w.movers.push(ent);
+      this.ents.push(ent);
+      this.grow({ x0: Math.min(a[0], b[0]) - hw, x1: Math.max(a[0], b[0]) + hw, z0: Math.min(a[1], b[1]) - hd2, z1: Math.max(a[1], b[1]) + hd2 });
+      this.path.push({ t: 'ride', ent, near: this.pt(-0.4, 0), far: this.pt(G + 0.4, 0), travel: far - near, y: this.y, x: a[0], z: a[1], hx: this.hd.f[0], hz: this.hd.f[1] });
+      this.advance(G);
+    }
+    spinner(cols, rows, count) {
+      const L = rows * KP;
+      this.strip(L, cols);
+      const half = (cols * KP) / 2 - 0.5;
+      for (let i = 0; i < count; i++) {
+        const u = L * ((i + 1) / (count + 1));
+        const c = this.pt(u - L, 0); // strip đã advance => lùi lại
+        const sp = new E.Spinner(this.group, c[0], this.y, c[1], half, (1.5 + this.s * 0.1) * (i % 2 ? -1 : 1), this.pal.accent);
+        this.w.spinners.push(sp);
+        this.ents.push(sp);
+      }
+    }
+    brainrot(cols, rows, count, chase) {
+      const L = rows * KP;
+      const W = cols * KP;
+      this.strip(L, cols);
+      const h = this.hd;
+      for (let i = 0; i < count; i++) {
+        const u = L * ((i + 0.6) / (count + 0.2)) - L;
+        const c = this.pt(u, 0);
+        const bo = new E.Brainrot(this.group, { x: c[0], y: this.y, z: c[1] }, { x: h.r[0], z: h.r[1] }, W / 2 - 1.8, L / 2 - 1.4, 4.5 + this.s * 0.55, (this.s + i) % 3, chase, this.rng());
+        this.w.brainrots.push(bo);
+        this.ents.push(bo);
+      }
+    }
+    laser(rows) {
+      const cols = 6;
+      const L = rows * KP;
+      const W = cols * KP;
+      this.strip(L, cols);
+      const covers = [];
+      const nCov = Math.max(3, rows - 3);
+      for (let i = 0; i < nCov; i++) {
+        const u = L * ((i + 1) / (nCov + 1)) - L;
+        const v = (i % 2 ? 1 : -1) * W * 0.18 * (1 + ((i * 7) % 3) * 0.25);
+        const r = this.rect(u - KU / 2, u + KU / 2, v - KU / 2, v + KU / 2);
+        const bot = this.y;
+        const top = this.y + 5.2;
+        const cap = new THREE.Color(this.pal.accent);
+        const side = cap.clone().multiplyScalar(0.7);
+        const ps = this.plain.v;
+        this.plain.solid(r.x0, bot, r.z0, r.x1, top - CAPH, r.z1, 0, 0, side);
+        this.plain.solid(r.x0, top - CAPH, r.z0, r.x1, top, r.z1, 0.1, 0.4, cap);
+        const box = { x0: r.x0, y0: bot - 0.1, z0: r.z0, x1: r.x1, y1: top, z1: r.z1, kind: 'cover', stage: this.s, active: true, stamp: 0, pr: null, lr: null };
+        void ps;
+        this.w.addStatic(box);
+        this.boxes.push(box);
+        covers.push(box);
+      }
+      // trụ laser đặt ở rìa cuối đoạn, hướng ngược lại
+      const side = this.s % 2 ? 1 : -1;
+      const p = this.pt(0, side * (W / 2 + 3.2));
+      const target = this.pt(-L * 0.45, 0);
+      const baseYaw = Math.atan2(target[0] - p[0], target[1] - p[1]);
+      const range = Math.hypot(L, W / 2 + 3.5) * 1.08; // phủ hết dải hành lang
+      const lz = new E.Laser(this.group, { x: p[0], y: this.y - 3, z: p[1] }, baseYaw, 0.55, 0.9, range, covers, this.rng() * 6);
+      lz.eyeH = 9.5;
+      lz.head.position.y = lz.eyeH;
+      lz.wedge.position.y = 3.06; // trụ đặt thấp hơn mặt phím 3 đơn vị => nâng vùng quét lên mặt sàn
+      this.w.lasers.push(lz);
+      this.ents.push(lz);
+    }
+    corner() {
+      const cols = this.lastCols;
+      const W = cols * KP;
+      this.strip(W, cols, { noEnd: true });
+      this.mark('walk', -W / 2, 0);
+      const f = this.hd.f;
+      const cxm = this.x - f[0] * (W / 2);
+      const czm = this.z - f[1] * (W / 2);
+      if (this.head === 'N') {
+        this.head = this.detourSign > 0 ? 'E' : 'W';
+        this.detourSign = -this.detourSign;
+      } else {
+        this.head = 'N';
+      }
+      this.hd = HEAD[this.head];
+      this.x = cxm + this.hd.f[0] * (W / 2);
+      this.z = czm + this.hd.f[1] * (W / 2);
+    }
+    win() {
+      const st = D.STAGES[this.s];
+      const cols = 5;
+      const rows = 3;
+      const W = cols * KP - KG;
+      const Ld = rows * KP - KG;
+      const cap = new THREE.Color('#ffd93d');
+      const box = this.addKey(KG / 2, KG / 2 + Ld, -W / 2, W / 2, { kind: 'win', cap, label: 'WIN', labelSize: 4.6, inset: 0.6 });
+      this.deck(0, Ld + KG, -W / 2 - KG / 2, W / 2 + KG / 2);
+      const c = this.pt(KG / 2 + Ld / 2, 0);
+      this.w.stages[this.s].win = { x: c[0], y: this.y, z: c[1], box };
+      this.mark('walk', KG / 2 + Ld / 2, 0, { win: true });
+      // cột sáng + biển
+      const beam = new THREE.Mesh(
+        new THREE.CylinderGeometry(7.5, 7.5, 34, 28, 1, true),
+        new THREE.MeshBasicMaterial({ color: '#ffe066', transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })
+      );
+      beam.position.set(c[0], this.y + 17, c[1]);
+      this.group.add(beam);
+      this.w.beams.push(beam);
+      this.w.sprite(this.group, [`+${U.fmt(st.wins)} WINS`, `Stage ${this.s + 1} Clear!`], { w: 15, h: 5.5, x: c[0], y: this.y + 8.5, z: c[1], tw: 768, th: 280, fills: ['#ffe066', '#ffffff'], sizes: [130, 70] });
+      this.advance(Ld + KG);
+    }
+
+    // ---------------------------------------------------------------- chương trình stage
+    run(prog) {
+      for (const t of prog) {
+        switch (t[0]) {
+          case 'plaza': this.plaza(); break;
+          case 'strip': this.strip(t[1], t[2], t[3]); break;
+          case 'jump': this.gapCell(this.gap()); break;
+          case 'stones': this.stones(t[1], t[2] || 1, t[3] || 0.6); break;
+          case 'vanish': this.vanish(t[1], t[2] || 2); break;
+          case 'mover': this.mover(t[1] || 2, t[2]); break;
+          case 'spinner': this.spinner(t[1], t[2], t[3]); break;
+          case 'brainrot': this.brainrot(t[1], t[2], t[3], t[4]); break;
+          case 'laser': this.laser(t[1]); break;
+          case 'corner': this.corner(); break;
+          case 'win': this.win(); break;
+          default:
+        }
+      }
+    }
+    finish() {
+      const w = this.w;
+      const pg = this.plain.geometry();
+      const lg = this.labels.geometry(true);
+      const pm = new THREE.Mesh(pg, w.plainMat);
+      pm.castShadow = true;
+      pm.receiveShadow = true;
+      this.group.add(pm);
+      const lm = new THREE.Mesh(lg, w.labelMat);
+      lm.receiveShadow = true;
+      this.group.add(lm);
+      const sm = { plain: pg, labels: lg, basePlain: new Float32Array(pg.attributes.position.array), baseLabels: new Float32Array(lg.attributes.position.array) };
+      this.boxes.forEach((b) => { b.sm = sm; });
+      if (w.stages[this.s]) w.stages[this.s].path = this.path;
+      w.root.add(this.group);
+      return this;
+    }
+  }
+
+  // ============================================================ chương trình theo stage
+  function makeProgram(s) {
+    const rng = U.rng(9100 + s * 31);
+    const t = [['plaza']];
+    const cols = s >= 8 ? 4 : 3;
+    const landing = Math.round(8 + s * 1.2);
+    t.push(['strip', 12, cols]);
+    const pool = ['stones', 'jump'];
+    if (s >= 1) pool.push('vanish');
+    if (s >= 2) pool.push('mover');
+    if (s >= 3) { pool.push('spinner'); pool.push('brainrot'); }
+    if (s >= 4) pool.push('narrow');
+    if (s >= 7) pool.push('laser');
+    if (s === 0) pool.push('narrow');
+    let useful = pool.slice();
+    if (s === 9) useful = ['brainrot', 'laser', 'brainrot', 'stones', 'vanish', 'laser'];
+    const count = 5 + Math.floor(s * 0.6);
+    let last = '';
+    const ckAt = [Math.floor(count / 2) - 1, count - 3];
+    for (let i = 0; i < count; i++) {
+      let ty;
+      let guard = 0;
+      do { ty = useful[(rng() * useful.length) | 0]; guard++; } while (ty === last && guard < 8);
+      last = ty;
+      switch (ty) {
+        case 'stones': t.push(['stones', 3 + Math.floor(s / 3), 1, 0.7]); break;
+        case 'jump': t.push(['jump']); break;
+        case 'vanish': t.push(['vanish', 5 + Math.floor(s / 2), cols]); break;
+        case 'mover': t.push(['mover', 2]); break;
+        case 'spinner': t.push(['spinner', cols + 1, 5, 2 + (s >= 8 ? 1 : 0)]); break;
+        case 'brainrot': t.push(['brainrot', cols + 2, 6, 2 + Math.floor(s / 4), s >= 4]); break;
+        case 'narrow': t.push(['strip', KP * (4 + Math.floor(s / 2)), s === 0 ? 2 : 1]); break;
+        case 'laser': t.push(['laser', 10]); break;
+        default:
+      }
+      const ck = ckAt.indexOf(i) >= 0 ? { stage: s, plaza: false } : null;
+      t.push(['strip', landing, cols, ck ? { ck } : undefined]);
+      if (i === 1 || i === count - 3) { t.push(['corner']); t.push(['strip', KP * 5, cols]); t.push(['corner']); t.push(['strip', KP * 2, cols]); }
+    }
+    t.push(['strip', 10, cols], ['win']);
+    return t;
+  }
+
+  const LOBBY_PAL = { caps: ['#ff9ec7', '#8be0a4', '#ffd36e', '#9ad7ff', '#d9b8ff'], deck: '#5b3426', accent: '#ff6fa5' };
+
+  // ============================================================ World
+  class World {
+    constructor(scene) {
+      this.scene = scene;
+      this.root = new THREE.Group();
+      scene.add(this.root);
+      this.grid = new Grid(12);
+      this.dyn = [];
+      this.stages = [];
+      this.plazaCk = [];
+      this.movers = [];
+      this.vanishers = [];
+      this.spinners = [];
+      this.brainrots = [];
+      this.lasers = [];
+      this.beams = [];
+      this.belts = [];
+      this.treadSigns = [];
+      this.groups = [];
+      this.pads = [];
+      this.presses = [];
+      this.tmpBoxes = [];
+      this.atlas = makeAtlas();
+      this.plainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.38, metalness: 0.02 });
+      this.labelMat = new THREE.MeshLambertMaterial({
+        map: this.atlas.tex, vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+      });
+      this.beltTex = this.makeBeltTexture();
+      this.beltMat = new THREE.MeshStandardMaterial({ map: this.beltTex, color: '#6b4226', roughness: 0.7 });
+      this.railMat = new THREE.MeshStandardMaterial({ color: '#c98b5a', emissive: '#c98b5a', emissiveIntensity: 0.6 });
+      this.treadTier = 0;
+      this.killY = KILL_Y;
+      this.seaY = SEA_Y;
+      this.build();
+    }
+    makeBeltTexture() {
+      const c = document.createElement('canvas');
+      c.width = 64;
+      c.height = 128;
+      const g = c.getContext('2d');
+      g.fillStyle = '#9d9d9d';
+      g.fillRect(0, 0, 64, 128);
+      g.strokeStyle = '#ffffff';
+      g.lineWidth = 9;
+      g.lineCap = 'round';
+      g.lineJoin = 'round';
+      for (let i = 0; i < 2; i++) {
+        const y = 22 + i * 64;
+        g.beginPath();
+        g.moveTo(10, y + 22);
+        g.lineTo(32, y);
+        g.lineTo(54, y + 22);
+        g.stroke();
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    }
+    addStatic(b) {
+      this.grid.add(b);
+    }
+    addBelt(group, r, y) {
+      const w = r.x1 - r.x0;
+      const l = r.z1 - r.z0;
+      const geo = new THREE.BoxGeometry(w, 0.5, l);
+      const tex = this.beltTex.clone();
+      tex.needsUpdate = true;
+      tex.repeat.set(1, l / 6.4);
+      const mat = this.beltMat.clone();
+      mat.map = tex;
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set((r.x0 + r.x1) / 2, y - 0.23, (r.z0 + r.z1) / 2);
+      m.receiveShadow = true;
+      group.add(m);
+      this.belts.push({ tex, mat });
+      [-1, 1].forEach((s) => {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.5, l), this.railMat);
+        rail.position.set((r.x0 + r.x1) / 2 + s * (w / 2 - 0.14), y + 0.02, (r.z0 + r.z1) / 2);
+        group.add(rail);
+      });
+    }
+    sprite(group, lines, o) {
+      const tex = U.textTexture(lines, { w: o.tw || 512, h: o.th || 160, fills: o.fills, sizes: o.sizes });
+      const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
+      const s = new THREE.Sprite(mat);
+      s.scale.set(o.w, o.h, 1);
+      s.position.set(o.x, o.y, o.z);
+      group.add(s);
+      return s;
+    }
+    treadSign(group, pos, y) {
+      const s = this.sprite(group, ['TREADMILL', '×1'], { w: 11, h: 3.8, x: pos[0], y, z: pos[1], tw: 512, th: 176, fills: ['#ffffff', '#ffe066'], sizes: [64, 78] });
+      this.treadSigns.push(s);
+    }
+    setTreadmillTier(i) {
+      const t = D.TREADMILLS[i];
+      this.treadTier = i;
+      this.beltMat.color.set(t.color);
+      this.railMat.color.set(t.glow);
+      this.railMat.emissive.set(t.glow);
+      this.belts.forEach((b) => b.mat.color.set(t.color));
+      this.treadSigns.forEach((s) => {
+        const old = s.material.map;
+        s.material.map = U.textTexture(['TREADMILL', U.fmtMult(t.mult)], { w: 512, h: 176, fills: ['#ffffff', t.glow], sizes: [64, 78] });
+        s.material.needsUpdate = true;
+        if (old) old.dispose();
+      });
+    }
+
+    // ------------------------------------------------------------ build
+    build() {
+      // Lobby
+      const lb = new Builder(this, -1, LOBBY_PAL, { x: 0, y: 0, z: 0 }, 777);
+      this.buildLobby(lb);
+      lb.finish();
+      this.groups.push(lb);
+      this.lobby = lb;
+      let z = lb.z;
+      let first = true;
+      D.STAGES.forEach((st, i) => {
+        this.stages[i] = { index: i, name: st.name };
+        const b = new Builder(this, i, st, { x: 0, y: 0, z: first ? z : z - 36 }, 4242 + i * 17);
+        first = false;
+        b.run(makeProgram(i));
+        b.finish();
+        this.stages[i].ck = this.plazaCk[i];
+        this.stages[i].bb = b.bb;
+        this.groups.push(b);
+        this.buildDecor(b, i);
+        z = b.z; // stage kế tiếp bắt đầu sau stage này (cách 36 đơn vị)
+      });
+      // biển chocolate bên dưới (rơi xuống là respawn)
+      this.sea = new THREE.Mesh(
+        new THREE.PlaneGeometry(6000, 6000),
+        new THREE.MeshStandardMaterial({ color: '#5a3320', roughness: 0.18, metalness: 0.25 })
+      );
+      this.sea.rotation.x = -Math.PI / 2;
+      this.sea.position.y = SEA_Y;
+      this.sea.receiveShadow = false;
+      this.scene.add(this.sea);
+      this.setTreadmillTier(0);
+    }
+
+    buildLobby(b) {
+      // spawn area
+      const cols = 9;
+      const W = cols * KP;
+      const ck = { stage: -1, plaza: true, lobby: true, x: 0, y: 0, z: 0, yaw: 0 };
+      b.strip(2 * KP, cols, { ck });
+      // hàng nút số (shop) — 2 pad đặc biệt + 7 phím số '2'..'8'
+      const row = (n) => n * KP;
+      const rowKeys = [
+        { n: 'SHOP', pad: { type: 'shop' }, cap: '#ff6fa5' },
+        { n: 'REB', pad: { type: 'rebirth' }, cap: '#b57bff' },
+      ];
+      for (let i = 1; i <= 7; i++) rowKeys.push({ n: String(i + 1), pad: { type: 'step', tier: i }, cap: '#ffe29a' });
+      rowKeys.forEach((k, ci) => {
+        const v0 = -W / 2 + ci * KP;
+        const box = b.addKey(KG / 2, KP - KG / 2, v0 + KG / 2, v0 + KP - KG / 2, { label: k.n, cap: new THREE.Color(k.cap), kind: 'pad', pad: k.pad, labelSize: k.n.length > 1 ? 1.3 : 1.15 });
+        const c = b.pt(KP / 2, -W / 2 + ci * KP + KP / 2);
+        const sp = this.sprite(b.group, ['', ''], { w: 4.6, h: 2.05, x: c[0], y: b.y + 3.6, z: c[1], tw: 384, th: 170 });
+        this.pads.push({ box, pad: k.pad, sprite: sp, x: c[0], z: c[1] });
+      });
+      b.deck(0, KP, -W / 2, W / 2);
+      b.advance(KP);
+      b.strip(KP, cols);
+      // treadmill zone: dùng plaza() nhưng không có biển stage -> tạo thủ công
+      const lanes = [1, 4, 7];
+      const segs = [[0, 1], [2, 2], [5, 2], [8, 1]];
+      const rows = 6;
+      for (let r = 0; r < rows; r++) {
+        const tread = r >= 1 && r <= 4;
+        const parts = tread ? segs : [[0, cols]];
+        parts.forEach(([c0, n]) => {
+          let v = -W / 2 + c0 * KP;
+          b.partition(n).forEach((w) => {
+            const cell = w * KP;
+            b.addKey(r * KP + KG / 2, (r + 1) * KP - KG / 2, v + KG / 2, v + cell - KG / 2, { label: b.labelFor(w) });
+            v += cell;
+          });
+        });
+      }
+      lanes.forEach((c) => {
+        const v0 = -W / 2 + c * KP + KG / 2;
+        const v1 = v0 + KU;
+        const u0 = KP + KG / 2;
+        const u1 = 5 * KP - KG / 2;
+        const box = b.addKey(u0, u1, v0, v1, { kind: 'treadmill', cap: new THREE.Color('#2a2a33'), label: null, inset: 0 });
+        box.belt = true;
+        this.addBelt(b.group, b.rect(u0, u1, v0, v1), b.y);
+      });
+      b.deck(0, rows * KP, -W / 2, W / 2);
+      const tc = b.pt(KP * 3, 0);
+      this.treadSign(b.group, tc, b.y + 6.5);
+      b.advance(rows * KP);
+      const sc = b.pt(KP * 3.5, 0);
+      this.sprite(b.group, ['+1 SPEED', 'KEYBOARD ESCAPE', 'Chạy · Nhảy · Thoát khỏi bàn phím!'],
+        { w: 34, h: 14.6, x: sc[0], y: b.y + 17, z: sc[1], tw: 1024, th: 440, fills: ['#ffe066', '#ffffff', '#ffd6f0'], sizes: [190, 120, 52], strokeColors: ['#7a2a00', '#6a1b9a', '#6a1b9a'] });
+      b.strip(2 * KP, 3);
+      b.strip(KP * 3, 3);
+      const sp = ck;
+      this.spawn = { x: sp.x, y: sp.y, z: sp.z, yaw: sp.yaw, stage: -1 };
+      this.plazaCk[-1] = ck;
+      this.lobbyCk = ck;
+    }
+
+    buildDecor(b, i) {
+      const st = D.STAGES[i];
+      const rng = U.rng(555 + i * 13);
+      const boxes = b.boxes;
+      if (!boxes.length) return;
+      const geos = [
+        new THREE.SphereGeometry(1, 14, 10),
+        new THREE.TorusGeometry(1, 0.42, 10, 20),
+        new THREE.ConeGeometry(1, 2.4, 12),
+        new THREE.CapsuleGeometry(0.45, 2.2, 4, 8),
+        new THREE.BoxGeometry(1.6, 1.6, 1.6),
+      ];
+      const lists = geos.map(() => []);
+      const cols = st.caps.map((h) => new THREE.Color(h));
+      const count = 46;
+      let guard = 0;
+      while (lists.reduce((a, l) => a + l.length, 0) < count && guard++ < 500) {
+        const k = boxes[(rng() * boxes.length) | 0];
+        const ang = rng() * Math.PI * 2;
+        const dist = 38 + rng() * 90;
+        const x = (k.x0 + k.x1) / 2 + Math.cos(ang) * dist;
+        const z = (k.z0 + k.z1) / 2 + Math.sin(ang) * dist;
+        const y = -6 + rng() * 34 - (rng() < 0.3 ? 20 : 0);
+        const near = [];
+        this.grid.query(x - 30, z - 30, x + 30, z + 30, near);
+        if (near.some((q) => y > q.y0 - 18 && y < q.y1 + 18 && x > q.x0 - 24 && x < q.x1 + 24 && z > q.z0 - 24 && z < q.z1 + 24)) continue;
+        const kind = (rng() * geos.length) | 0;
+        const s = 2.5 + rng() * 6;
+        lists[kind].push({ x, y, z, s, c: cols[(rng() * cols.length) | 0], rx: rng() * 3, rz: rng() * 3 });
+      }
+      const dummy = new THREE.Object3D();
+      geos.forEach((geo, gi) => {
+        const l = lists[gi];
+        if (!l.length) return;
+        const m = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.0 }), l.length);
+        l.forEach((it, idx) => {
+          dummy.position.set(it.x, it.y, it.z);
+          dummy.rotation.set(it.rx, it.rx * 0.7, it.rz);
+          dummy.scale.setScalar(it.s);
+          dummy.updateMatrix();
+          m.setMatrixAt(idx, dummy.matrix);
+          m.setColorAt(idx, it.c);
+        });
+        m.instanceMatrix.needsUpdate = true;
+        if (m.instanceColor) m.instanceColor.needsUpdate = true;
+        b.group.add(m);
+      });
+    }
+
+    // ------------------------------------------------------------ truy vấn / cập nhật
+    query(x0, y0, z0, x1, y1, z1, out) {
+      out.length = 0;
+      this.grid.query(x0, z0, x1, z1, out);
+      let n = 0;
+      for (let i = 0; i < out.length; i++) {
+        const b = out[i];
+        if (b.y1 < y0 || b.y0 > y1) continue;
+        out[n++] = b;
+      }
+      out.length = n;
+      for (let i = 0; i < this.dyn.length; i++) {
+        const b = this.dyn[i];
+        if (!b.active) continue;
+        if (b.x1 < x0 || b.x0 > x1 || b.z1 < z0 || b.z0 > z1 || b.y1 < y0 || b.y0 > y1) continue;
+        out.push(b);
+      }
+      return out;
+    }
+
+    press(box) {
+      if (!box || !box.pr || !box.sm) return;
+      for (let i = 0; i < this.presses.length; i++) {
+        if (this.presses[i].box === box) { this.presses[i].t = 0; return; }
+      }
+      this.presses.push({ box, t: 0 });
+    }
+
+    applyPress(box, k) {
+      const sm = box.sm;
+      const off = -0.5 * k;
+      const pa = sm.plain.attributes.position;
+      for (let i = box.pr[0]; i < box.pr[1]; i++) pa.array[i * 3 + 1] = sm.basePlain[i * 3 + 1] + off;
+      pa.needsUpdate = true;
+      if (box.lr) {
+        const la = sm.labels.attributes.position;
+        for (let i = box.lr[0]; i < box.lr[1]; i++) la.array[i * 3 + 1] = sm.baseLabels[i * 3 + 1] + off;
+        la.needsUpdate = true;
+      }
+    }
+
+    /** Cập nhật thế giới. ctx: {player, audio, kill(reason)} */
+    update(dt, t, ctx) {
+      const p = ctx.player.pos;
+      // belt scroll
+      const sc = dt * 1.1;
+      this.belts.forEach((b) => { b.tex.offset.y += sc; });
+      // key press anim
+      for (let i = this.presses.length - 1; i >= 0; i--) {
+        const pr = this.presses[i];
+        pr.t += dt;
+        const down = 0.07;
+        const up = 0.22;
+        let k;
+        if (pr.t < down) k = pr.t / down;
+        else k = Math.max(0, 1 - (pr.t - down) / up);
+        this.applyPress(pr.box, k);
+        if (pr.t > down + up) this.presses.splice(i, 1);
+      }
+      // visibility theo khoảng cách
+      this.groups.forEach((g) => {
+        const bb = g.bb;
+        const dx = Math.max(bb.x0 - p.x, 0, p.x - bb.x1);
+        const dz = Math.max(bb.z0 - p.z, 0, p.z - bb.z1);
+        g.dist = Math.hypot(dx, dz);
+        g.group.visible = g.dist < 420;
+      });
+      const near = (e, r) => {
+        const ex = e.x !== undefined ? e.x : e.pos ? e.pos.x : e.cx;
+        const ez = e.z !== undefined ? e.z : e.pos ? e.pos.z : e.cz;
+        return Math.abs(ex - p.x) < r && Math.abs(ez - p.z) < r;
+      };
+      for (let i = 0; i < this.movers.length; i++) this.movers[i].update(dt, t);
+      for (let i = 0; i < this.vanishers.length; i++) this.vanishers[i].update(dt);
+      for (let i = 0; i < this.spinners.length; i++) {
+        const s = this.spinners[i];
+        if (!near(s, 160)) continue;
+        s.update(dt);
+        if (!ctx.player.invuln && s.hit(p)) ctx.kill('spinner');
+      }
+      for (let i = 0; i < this.brainrots.length; i++) {
+        const b = this.brainrots[i];
+        if (!near(b, 160)) continue;
+        b.update(dt, t, ctx);
+        if (!ctx.player.invuln && b.hit(p)) ctx.kill('brainrot');
+      }
+      for (let i = 0; i < this.lasers.length; i++) {
+        const l = this.lasers[i];
+        if (!near(l, 200)) continue;
+        l.update(dt, t, ctx);
+      }
+      for (let i = 0; i < this.beams.length; i++) this.beams[i].rotation.y += dt * 0.6;
+      this.sea.position.x = p.x;
+      this.sea.position.z = p.z;
+      if (ctx.seaColor) this.sea.material.color.copy(ctx.seaColor);
+      // checkpoint cờ nhấp nhô
+      this.groups.forEach((g) => {
+        if (g.group.visible) void g;
+      });
+    }
+
+    refreshPads(state) {
+      this.pads.forEach((pd) => {
+        let lines;
+        let fills;
+        if (pd.pad.type === 'shop') { lines = ['SHOP', 'Trails • Auras']; fills = ['#ffffff', '#ffd6f0']; }
+        else if (pd.pad.type === 'rebirth') { lines = ['REBIRTH', 'Reset ×Mult']; fills = ['#ffffff', '#e5d1ff']; }
+        else {
+          const st = D.STEPS[pd.pad.tier];
+          const owned = state.stepTier >= pd.pad.tier;
+          const next = state.stepTier + 1 === pd.pad.tier;
+          lines = [`+${st.step} Step`, owned ? '✔ Owned' : `${U.fmt(st.wins)} Wins`];
+          fills = ['#ffffff', owned ? '#8dffb0' : next ? '#ffe066' : '#c9c1d6'];
+        }
+        const old = pd.sprite.material.map;
+        pd.sprite.material.map = U.textTexture(lines, { w: 384, h: 170, fills, sizes: [76, 62] });
+        pd.sprite.material.needsUpdate = true;
+        if (old) old.dispose();
+      });
+    }
+  }
+
+  SKE.World = World;
+  SKE.WORLD_CONST = { KU, KG, KP, KH, SEA_Y, KILL_Y };
+})();
+
+</script>
+<script>
+/* Hiệu ứng hạt (trail, aura, confetti, splash) bằng THREE.Points */
+(function () {
+  'use strict';
+  const SKE = window.SKE;
+  const THREE = window.THREE;
+
+  const VERT = `
+    attribute float size;
+    attribute float alpha;
+    attribute vec3 pcolor;
+    varying float vAlpha;
+    varying vec3 vColor;
+    uniform float scale;
+    void main() {
+      vAlpha = alpha;
+      vColor = pcolor;
+      vec4 mv = modelViewMatrix * vec4(position, 1.0);
+      gl_PointSize = size * scale / max(0.5, -mv.z);
+      gl_Position = projectionMatrix * mv;
+    }`;
+  const FRAG = `
+    varying float vAlpha;
+    varying vec3 vColor;
+    void main() {
+      vec2 d = gl_PointCoord - 0.5;
+      float r = length(d) * 2.0;
+      if (r > 1.0) discard;
+      float a = smoothstep(1.0, 0.2, r) * vAlpha;
+      gl_FragColor = vec4(vColor, a);
+    }`;
+
+  class Particles {
+    constructor(scene, max, additive) {
+      this.max = max;
+      this.next = 0;
+      this.pos = new Float32Array(max * 3);
+      this.vel = new Float32Array(max * 3);
+      this.col = new Float32Array(max * 3);
+      this.size = new Float32Array(max);
+      this.alpha = new Float32Array(max);
+      this.life = new Float32Array(max);
+      this.maxLife = new Float32Array(max);
+      this.grav = new Float32Array(max);
+      this.size0 = new Float32Array(max);
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(this.pos, 3));
+      g.setAttribute('pcolor', new THREE.BufferAttribute(this.col, 3));
+      g.setAttribute('size', new THREE.BufferAttribute(this.size, 1));
+      g.setAttribute('alpha', new THREE.BufferAttribute(this.alpha, 1));
+      g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e6);
+      this.geo = g;
+      this.mat = new THREE.ShaderMaterial({
+        vertexShader: VERT,
+        fragmentShader: FRAG,
+        transparent: true,
+        depthWrite: false,
+        blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+        uniforms: { scale: { value: 600 } },
+      });
+      this.points = new THREE.Points(g, this.mat);
+      this.points.frustumCulled = false;
+      scene.add(this.points);
+    }
+    emit(x, y, z, vx, vy, vz, life, size, r, g, b, grav) {
+      const i = this.next;
+      this.next = (this.next + 1) % this.max;
+      const i3 = i * 3;
+      this.pos[i3] = x; this.pos[i3 + 1] = y; this.pos[i3 + 2] = z;
+      this.vel[i3] = vx; this.vel[i3 + 1] = vy; this.vel[i3 + 2] = vz;
+      this.col[i3] = r; this.col[i3 + 1] = g; this.col[i3 + 2] = b;
+      this.life[i] = life;
+      this.maxLife[i] = life;
+      this.size0[i] = size;
+      this.size[i] = size;
+      this.alpha[i] = 1;
+      this.grav[i] = grav || 0;
+    }
+    update(dt, viewportH, fov) {
+      this.mat.uniforms.scale.value = viewportH / (2 * Math.tan((fov * Math.PI) / 360));
+      for (let i = 0; i < this.max; i++) {
+        if (this.life[i] <= 0) {
+          if (this.alpha[i] !== 0) { this.alpha[i] = 0; this.size[i] = 0; }
+          continue;
+        }
+        this.life[i] -= dt;
+        const i3 = i * 3;
+        this.vel[i3 + 1] -= this.grav[i] * dt;
+        this.pos[i3] += this.vel[i3] * dt;
+        this.pos[i3 + 1] += this.vel[i3 + 1] * dt;
+        this.pos[i3 + 2] += this.vel[i3 + 2] * dt;
+        const k = Math.max(0, this.life[i] / this.maxLife[i]);
+        this.alpha[i] = Math.min(1, k * 1.6);
+        this.size[i] = this.size0[i] * (0.4 + 0.6 * k);
+      }
+      this.geo.attributes.position.needsUpdate = true;
+      this.geo.attributes.pcolor.needsUpdate = true;
+      this.geo.attributes.size.needsUpdate = true;
+      this.geo.attributes.alpha.needsUpdate = true;
+    }
+  }
+
+  SKE.Particles = Particles;
+})();
+
+</script>
+<script>
+/* Nhân vật (avatar kiểu Roblox), vật lý va chạm AABB, camera, input */
+(function () {
+  'use strict';
+  const SKE = window.SKE;
+  const THREE = window.THREE;
+  const U = SKE.util;
+  const D = SKE.data;
+
+  // ============================================================ Avatar
+  function faceTexture() {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const g = c.getContext('2d');
+    g.fillStyle = '#ffd34d';
+    g.fillRect(0, 0, 128, 128);
+    g.fillStyle = '#1b1b1b';
+    g.beginPath(); g.ellipse(42, 54, 8, 13, 0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(86, 54, 8, 13, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#1b1b1b';
+    g.lineWidth = 7;
+    g.lineCap = 'round';
+    g.beginPath(); g.arc(64, 74, 26, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+  function shirtTexture() {
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 128;
+    const g = c.getContext('2d');
+    g.fillStyle = '#3b82f6';
+    g.fillRect(0, 0, 128, 128);
+    g.fillStyle = '#ffffff';
+    g.font = `800 62px ${SKE.FONT}`;
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText('+1', 64, 66);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  class Avatar {
+    constructor() {
+      const g = (this.group = new THREE.Group());
+      const skin = new THREE.MeshStandardMaterial({ color: '#ffd34d', roughness: 0.6 });
+      const legMat = new THREE.MeshStandardMaterial({ color: '#2fb36b', roughness: 0.6 });
+      const shirtFront = new THREE.MeshStandardMaterial({ map: shirtTexture(), roughness: 0.6 });
+      const shirt = new THREE.MeshStandardMaterial({ color: '#3b82f6', roughness: 0.6 });
+      const faceMat = new THREE.MeshStandardMaterial({ map: faceTexture(), roughness: 0.6 });
+      const box = (w, h, d, m) => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
+        mesh.castShadow = true;
+        return mesh;
+      };
+      // thân
+      this.torso = box(0.95, 0.72, 0.5, [shirt, shirt, shirt, shirt, shirtFront, shirt]);
+      this.torso.position.y = 1.16;
+      g.add(this.torso);
+      // đầu (mặt hướng +z)
+      this.head = box(0.62, 0.6, 0.62, [skin, skin, skin, skin, faceMat, skin]);
+      this.head.position.y = 1.8;
+      g.add(this.head);
+      // chân / tay có pivot ở hông/vai
+      const limb = (w, h, d, m, x, y) => {
+        const pivot = new THREE.Group();
+        pivot.position.set(x, y, 0);
+        const mesh = box(w, h, d, m);
+        mesh.position.y = -h / 2;
+        pivot.add(mesh);
+        g.add(pivot);
+        return pivot;
+      };
+      this.legL = limb(0.4, 0.8, 0.4, legMat, -0.22, 0.8);
+      this.legR = limb(0.4, 0.8, 0.4, legMat, 0.22, 0.8);
+      this.armL = limb(0.32, 0.74, 0.32, skin, -0.64, 1.48);
+      this.armR = limb(0.32, 0.74, 0.32, skin, 0.64, 1.48);
+      this.phase = 0;
+      this.swing = 0;
+      this.air = 0;
+      this.yaw = 0;
+      this.squash = 0;
+    }
+    /** run: 0..1 cường độ chạy; cadence: chu kỳ/giây */
+    update(dt, run, cadence, airborne, vy) {
+      this.phase += dt * cadence * Math.PI * 2;
+      this.swing = U.damp(this.swing, run, 14, dt);
+      this.air = U.damp(this.air, airborne ? 1 : 0, 16, dt);
+      const s = Math.sin(this.phase) * this.swing * 1.0;
+      const a = this.air;
+      this.legL.rotation.x = U.lerp(s, 0.5, a);
+      this.legR.rotation.x = U.lerp(-s, -0.35, a);
+      this.armL.rotation.x = U.lerp(-s, -2.5 + Math.min(0.6, Math.max(-0.6, vy * 0.02)), a);
+      this.armR.rotation.x = U.lerp(s, -2.5 + Math.min(0.6, Math.max(-0.6, vy * 0.02)), a);
+      const bob = Math.abs(Math.sin(this.phase)) * 0.08 * this.swing * (1 - a);
+      this.torso.position.y = 1.16 + bob;
+      this.head.position.y = 1.8 + bob;
+      this.group.rotation.y = this.yaw;
+      this.group.scale.y = 1 - this.squash * 0.18;
+      this.squash = U.damp(this.squash, 0, 14, dt);
+    }
+  }
+
+  // ============================================================ Player
+  class Player {
+    constructor(world) {
+      this.world = world;
+      this.pos = new THREE.Vector3();
+      this.vel = new THREE.Vector3();
+      this.half = 0.4;
+      this.h = 2.1;
+      this.grounded = false;
+      this.ground = null;
+      this.coyote = 0;
+      this.jumpBuf = 0;
+      this.invuln = 0;
+      this.avatar = new Avatar();
+      this.buf = [];
+      this.justLanded = 0;
+      this.justJumped = false;
+      this.hasInput = false;
+      this.stuck = 0;
+    }
+    place(x, y, z) {
+      this.pos.set(x, y, z);
+      this.vel.set(0, 0, 0);
+      this.grounded = false;
+      this.ground = null;
+    }
+    overlapXZ(b) {
+      const h = this.half;
+      return this.pos.x + h > b.x0 && this.pos.x - h < b.x1 && this.pos.z + h > b.z0 && this.pos.z - h < b.z1;
+    }
+    q() {
+      const h = this.half + 0.1;
+      return this.world.query(this.pos.x - h, this.pos.y - 0.6, this.pos.z - h, this.pos.x + h, this.pos.y + this.h + 0.6, this.pos.z + h, this.buf);
+    }
+    stepY(dt) {
+      const prevY = this.pos.y;
+      this.pos.y += this.vel.y * dt;
+      const list = this.q();
+      const tol = Math.max(0.3, -this.vel.y * dt + 0.1);
+      for (let i = 0; i < list.length; i++) {
+        const b = list[i];
+        if (!this.overlapXZ(b)) continue;
+        if (this.pos.y < b.y1 && this.pos.y + this.h > b.y0) {
+          if (this.vel.y <= 0 && prevY >= b.y1 - tol) {
+            this.pos.y = b.y1;
+            this.vel.y = 0;
+            this.grounded = true;
+            this.ground = b;
+          } else if (this.vel.y > 0 && prevY + this.h <= b.y0 + 0.3) {
+            this.pos.y = b.y0 - this.h;
+            this.vel.y = 0;
+          }
+        }
+      }
+    }
+    stepAxis(dt, axis) {
+      const v = this.vel[axis];
+      this.pos[axis] += v * dt;
+      const list = this.q();
+      const h = this.half;
+      const lo = axis === 'x' ? 'x0' : 'z0';
+      const hi = axis === 'x' ? 'x1' : 'z1';
+      const oth = axis === 'x' ? 'z' : 'x';
+      const olo = axis === 'x' ? 'z0' : 'x0';
+      const ohi = axis === 'x' ? 'z1' : 'x1';
+      for (let i = 0; i < list.length; i++) {
+        const b = list[i];
+        if (!(this.pos[oth] + h > b[olo] && this.pos[oth] - h < b[ohi])) continue;
+        if (!(this.pos[axis] + h > b[lo] && this.pos[axis] - h < b[hi])) continue;
+        if (!(this.pos.y < b.y1 - 0.001 && this.pos.y + this.h > b.y0)) continue;
+        const rise = b.y1 - this.pos.y;
+        if (rise > 0 && rise <= 0.55 && this.vel.y <= 0.01) {
+          this.pos.y = b.y1; // bước lên bậc thấp
+          this.grounded = true;
+          this.ground = b;
+          continue;
+        }
+        if (v > 0) this.pos[axis] = b[lo] - h - 1e-4;
+        else if (v < 0) this.pos[axis] = b[hi] + h + 1e-4;
+        else {
+          const a = this.pos[axis] + h - b[lo];
+          const c = b[hi] - (this.pos[axis] - h);
+          this.pos[axis] += a < c ? -a : c;
+        }
+        this.vel[axis] = 0;
+      }
+    }
+    probeGround() {
+      const list = this.q();
+      let best = null;
+      for (let i = 0; i < list.length; i++) {
+        const b = list[i];
+        if (!this.overlapXZ(b)) continue;
+        if (b.y1 <= this.pos.y + 0.06 && b.y1 >= this.pos.y - 0.12 && (!best || b.y1 > best.y1)) best = b;
+      }
+      if (best && this.vel.y <= 0.01) {
+        this.grounded = true;
+        this.ground = best;
+      }
+    }
+
+    /**
+     * input: {ax, ay} (phải/tiến), jump (bool nhấn), camYaw, moveSpeed
+     */
+    update(dt, input, moveSpeed, audio) {
+      const wasGrounded = this.grounded;
+      const fallSpeed = this.vel.y;
+      // carry theo sàn di động
+      if (this.ground && this.ground.dyn && this.ground.owner && this.ground.dx !== undefined) {
+        this.pos.x += this.ground.dx;
+        this.pos.z += this.ground.dz;
+      }
+      const sy = Math.sin(input.camYaw);
+      const cy = Math.cos(input.camYaw);
+      let dx = input.ax * cy + input.ay * -sy;
+      let dz = input.ax * -sy + input.ay * -cy;
+      const len = Math.hypot(dx, dz);
+      this.hasInput = len > 0.05;
+      if (len > 1) { dx /= len; dz /= len; }
+      const tx = this.hasInput ? dx * moveSpeed : 0;
+      const tz = this.hasInput ? dz * moveSpeed : 0;
+      let rate;
+      if (this.grounded) rate = this.hasInput ? moveSpeed * 10 : moveSpeed * 8;
+      else rate = this.hasInput ? moveSpeed * 2.6 : moveSpeed * 0.25;
+      const vx = tx - this.vel.x;
+      const vz = tz - this.vel.z;
+      const vl = Math.hypot(vx, vz);
+      const step = rate * dt;
+      if (vl <= step || vl < 1e-6) { this.vel.x = tx; this.vel.z = tz; }
+      else { this.vel.x += (vx / vl) * step; this.vel.z += (vz / vl) * step; }
+      // nhảy (coyote + buffer)
+      this.coyote = this.grounded ? 0.1 : this.coyote - dt;
+      this.jumpBuf = input.jump ? 0.12 : this.jumpBuf - dt;
+      this.justJumped = false;
+      if (this.jumpBuf > 0 && this.coyote > 0) {
+        this.vel.y = D.JUMP_V;
+        this.coyote = 0;
+        this.jumpBuf = 0;
+        this.grounded = false;
+        this.ground = null;
+        this.justJumped = true;
+        if (audio) audio.jump();
+      }
+      this.vel.y = Math.max(-70, this.vel.y - D.GRAVITY * dt);
+      this.grounded = false;
+      const prevGround = this.ground;
+      this.ground = null;
+      // di chuyển + va chạm (chia nhỏ để không xuyên khối ở tốc độ cao)
+      const sp = Math.hypot(this.vel.x, this.vel.z) + Math.abs(this.vel.y);
+      const n = Math.max(1, Math.ceil((sp * dt) / 0.3));
+      const h = dt / n;
+      for (let i = 0; i < n; i++) {
+        this.stepY(h);
+        this.stepAxis(h, 'x');
+        this.stepAxis(h, 'z');
+      }
+      this.probeGround();
+      if (!this.grounded && prevGround && prevGround.dyn && !prevGround.active) this.ground = null;
+      this.justLanded = 0;
+      if (this.grounded && !wasGrounded && fallSpeed < -8) {
+        this.justLanded = -fallSpeed;
+        this.avatar.squash = Math.min(1, -fallSpeed / 40);
+        if (audio) audio.land();
+      }
+      if (this.invuln > 0) this.invuln -= dt;
+      this.avatar.group.position.copy(this.pos);
+    }
+  }
+
+  // ============================================================ Camera
+  class CameraRig {
+    constructor(camera) {
+      this.cam = camera;
+      this.yaw = 0;
+      this.pitch = 0.42;
+      this.dist = 15;
+      this.focus = new THREE.Vector3();
+      this.fov = 68;
+      this.shake = 0;
+    }
+    snap(target, yaw) {
+      this.focus.set(target.x, target.y + 1.7, target.z);
+      if (yaw !== undefined) this.yaw = yaw;
+    }
+    update(dt, target, moveSpeed, speedXZ) {
+      const lam = 11 + moveSpeed * 0.25;
+      const k = 1 - Math.exp(-lam * dt);
+      this.focus.x += (target.x - this.focus.x) * k;
+      this.focus.z += (target.z - this.focus.z) * k;
+      this.focus.y += (target.y + 1.7 - this.focus.y) * (1 - Math.exp(-7 * dt));
+      const cp = Math.cos(this.pitch);
+      const d = this.dist;
+      this.cam.position.set(
+        this.focus.x + Math.sin(this.yaw) * cp * d,
+        this.focus.y + Math.sin(this.pitch) * d,
+        this.focus.z + Math.cos(this.yaw) * cp * d
+      );
+      if (this.shake > 0) {
+        this.cam.position.x += (Math.random() - 0.5) * this.shake;
+        this.cam.position.y += (Math.random() - 0.5) * this.shake;
+        this.shake = Math.max(0, this.shake - dt * 2);
+      }
+      this.cam.lookAt(this.focus);
+      const targetFov = 68 + Math.min(22, Math.max(0, speedXZ - 12) * 0.32);
+      this.fov = U.damp(this.fov, targetFov, 4, dt);
+      if (Math.abs(this.cam.fov - this.fov) > 0.01) {
+        this.cam.fov = this.fov;
+        this.cam.updateProjectionMatrix();
+      }
+    }
+  }
+
+  // ============================================================ Input
+  class Input {
+    constructor(canvas) {
+      this.keys = new Set();
+      this.stick = { x: 0, y: 0 };
+      this.jumpQueued = false;
+      this.jumpHeld = false;
+      this.camYawDelta = 0;
+      this.camPitchDelta = 0;
+      this.zoom = 0;
+      this.sens = 1;
+      this.handlers = [];
+      this.dragId = null;
+      const typing = (e) => e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT');
+      window.addEventListener('keydown', (e) => {
+        if (typing(e)) return;
+        const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Tab'].includes(e.key)) e.preventDefault();
+        if (k === ' ') {
+          if (!this.jumpHeld) this.jumpQueued = true;
+          this.jumpHeld = true;
+        }
+        if (!e.repeat) this.handlers.forEach((h) => h(k, e));
+        this.keys.add(k);
+      });
+      window.addEventListener('keyup', (e) => {
+        const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+        if (k === ' ') this.jumpHeld = false;
+        this.keys.delete(k);
+      });
+      window.addEventListener('blur', () => { this.keys.clear(); this.jumpHeld = false; });
+      canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+      canvas.addEventListener('pointerdown', (e) => {
+        if (this.dragId !== null) return;
+        this.dragId = e.pointerId;
+        this.lastX = e.clientX;
+        this.lastY = e.clientY;
+        canvas.setPointerCapture(e.pointerId);
+      });
+      canvas.addEventListener('pointermove', (e) => {
+        if (e.pointerId !== this.dragId) return;
+        const dx = e.clientX - this.lastX;
+        const dy = e.clientY - this.lastY;
+        this.lastX = e.clientX;
+        this.lastY = e.clientY;
+        this.camYawDelta -= dx * 0.0055 * this.sens;
+        this.camPitchDelta += dy * 0.0045 * this.sens;
+      });
+      const end = (e) => { if (e.pointerId === this.dragId) this.dragId = null; };
+      canvas.addEventListener('pointerup', end);
+      canvas.addEventListener('pointercancel', end);
+      canvas.addEventListener('wheel', (e) => { e.preventDefault(); this.zoom += Math.sign(e.deltaY); }, { passive: false });
+    }
+    onKey(fn) { this.handlers.push(fn); }
+    axes() {
+      const k = this.keys;
+      let ax = (k.has('d') || k.has('ArrowRight') ? 1 : 0) - (k.has('a') || k.has('ArrowLeft') ? 1 : 0);
+      let ay = (k.has('w') || k.has('ArrowUp') ? 1 : 0) - (k.has('s') || k.has('ArrowDown') ? 1 : 0);
+      ax += this.stick.x;
+      ay += this.stick.y;
+      return { ax: U.clamp(ax, -1, 1), ay: U.clamp(ay, -1, 1) };
+    }
+    takeJump() {
+      const j = this.jumpQueued;
+      this.jumpQueued = false;
+      return j;
+    }
+  }
+
+  SKE.Avatar = Avatar;
+  SKE.Player = Player;
+  SKE.CameraRig = CameraRig;
+  SKE.Input = Input;
+})();
+
+</script>
+<script>
+/* Giao diện: HUD + các bảng (Shop, Rebirth, Stages, Settings, Leaderboard, Help) */
+(function () {
+  'use strict';
+  const SKE = window.SKE;
+  const U = SKE.util;
+  const D = SKE.data;
+  const $ = U.$;
+  const el = U.el;
+
+  class UI {
+    constructor(game) {
+      this.g = game;
+      this.modal = $('#modal');
+      this.open = null;
+      this.tab = { shop: 'step' };
+      this.lastHud = 0;
+      this.popCount = 0;
+      this.modal.addEventListener('pointerdown', (e) => { if (e.target === this.modal) this.close(); });
+      $('#bShop').onclick = () => this.toggle('shop');
+      $('#bReb').onclick = () => this.toggle('rebirth');
+      $('#bStages').onclick = () => this.toggle('stages');
+      $('#bBoard').onclick = () => this.toggle('board');
+      $('#bSet').onclick = () => this.toggle('settings');
+    }
+
+    // ------------------------------------------------------------ HUD
+    hud() {
+      const g = this.g;
+      const s = g.state;
+      $('#vSpeed').textContent = U.fmt(s.speed);
+      $('#vWins').textContent = U.fmt(s.wins);
+      $('#vReb').textContent = String(s.rebirths);
+      const m = g.mults();
+      $('#stepInfo').innerHTML = `+${U.fmt(m.perStep)} / step${m.treadmill > 1 ? ` · <b style="color:#ffe27a">treadmill ×${U.fmt(m.treadmill)}</b>` : ''}`;
+      const lvl = g.level();
+      $('#lvlText').textContent = `Lv ${lvl}`;
+      const next = D.REBIRTHS[s.rebirths];
+      if (next) {
+        const need = D.speedForLevel(next.level);
+        const prev = D.speedForLevel(Math.min(lvl, next.level));
+        const prog = U.clamp(s.speed / need, 0, 1);
+        void prev;
+        $('#lvlBar').style.width = (prog * 100).toFixed(1) + '%';
+        $('#lvlNext').textContent = lvl >= next.level ? `✔ Sẵn sàng Rebirth! (${U.fmtMult(next.mult)})` : `Rebirth ${s.rebirths + 1} ở Lv ${next.level} → ${U.fmtMult(next.mult)}`;
+      } else {
+        $('#lvlBar').style.width = '100%';
+        $('#lvlNext').textContent = 'MAX REBIRTH';
+      }
+      $('#bReb').classList.toggle('dot', !!next && lvl >= next.level);
+      $('#bShop').classList.toggle('dot', g.canAffordSomething());
+    }
+    setStage(st) {
+      const t = $('#stageTag');
+      if (!st) t.innerHTML = '🏠 <b>Spawn</b> · Lobby';
+      else t.innerHTML = `Stage <b>${st.index + 1}/13</b> · ${st.name} · Win +${U.fmt(st.wins)}`;
+    }
+    banner(l1, l2, color) {
+      const b = $('#banner');
+      $('#bn1').textContent = l1;
+      const n2 = $('#bn2');
+      n2.textContent = l2;
+      n2.style.color = color || '#fff';
+      b.classList.remove('show');
+      void b.offsetWidth;
+      b.classList.add('show');
+    }
+    toast(msg, kind, life, big) {
+      const box = $('#toasts');
+      while (box.children.length > 3) box.removeChild(box.firstChild);
+      const t = el('div', `toast ${kind || ''} ${big ? 'big' : ''}`, msg);
+      t.style.setProperty('--life', (life || 2.4) + 's');
+      box.appendChild(t);
+      setTimeout(() => t.remove(), ((life || 2.4) + 0.6) * 1000);
+    }
+    popup(text, x, y, cls) {
+      if (this.popCount > 14) return;
+      this.popCount++;
+      const p = el('div', 'pop ' + (cls || ''), text);
+      p.style.left = x + 'px';
+      p.style.top = y + 'px';
+      $('#popups').appendChild(p);
+      p.addEventListener('animationend', () => { p.remove(); this.popCount--; });
+    }
+    flash() {
+      const f = $('#flash');
+      f.classList.add('on');
+      requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('on')));
+    }
+    fade(on) { $('#fade').classList.toggle('on', on); }
+
+    // ------------------------------------------------------------ Panels
+    toggle(name) {
+      if (this.open === name) this.close();
+      else this.show(name);
+    }
+    show(name) {
+      this.open = name;
+      this.modal.classList.add('open');
+      this.render();
+      this.g.onPanel(true);
+    }
+    close() {
+      if (!this.open) return;
+      this.open = null;
+      this.modal.classList.remove('open');
+      this.modal.innerHTML = '';
+      this.g.onPanel(false);
+    }
+    refresh() {
+      if (this.open) this.render(true);
+    }
+    shell(title, h1, h2) {
+      const p = el('div', 'panel');
+      const head = el('div', 'ph');
+      head.style.setProperty('--h1', h1);
+      head.style.setProperty('--h2', h2);
+      head.appendChild(el('h2', 'stroke', title));
+      const x = el('button', 'x', '✕');
+      x.onclick = () => this.close();
+      head.appendChild(x);
+      const body = el('div', 'pb');
+      p.appendChild(head);
+      p.appendChild(body);
+      return { p, body };
+    }
+    render(keepScroll) {
+      const prev = this.modal.querySelector('.pb');
+      const sc = prev ? prev.scrollTop : 0;
+      this.modal.innerHTML = '';
+      let sh;
+      switch (this.open) {
+        case 'shop': sh = this.renderShop(); break;
+        case 'rebirth': sh = this.renderRebirth(); break;
+        case 'stages': sh = this.renderStages(); break;
+        case 'settings': sh = this.renderSettings(); break;
+        case 'board': sh = this.renderBoard(); break;
+        case 'help': sh = this.renderHelp(); break;
+        default: return;
+      }
+      this.modal.appendChild(sh.p);
+      if (keepScroll) sh.body.scrollTop = sc;
+    }
+
+    // ---- Shop
+    renderShop() {
+      const g = this.g;
+      const s = g.state;
+      const sh = this.shell('🛒 Shop', '#ff9ec7', '#ff4f93');
+      const tabs = el('div', 'tabs');
+      [['step', '⚡ Step Power'], ['tread', '🏃 Treadmill'], ['trail', '🌈 Trails'], ['aura', '✨ Auras']].forEach(([id, label]) => {
+        const t = el('button', 'tab' + (this.tab.shop === id ? ' on' : ''), label);
+        t.onclick = () => { this.tab.shop = id; this.render(); };
+        tabs.appendChild(t);
+      });
+      sh.body.appendChild(tabs);
+      sh.body.appendChild(el('div', 'note', `Bạn có <b>${U.fmt(s.wins)} 🏆 Wins</b>. Speed mỗi bước = (Step Power) × Rebirth × Trail × Aura (× Treadmill khi đứng trên treadmill).`));
+      const grid = el('div', 'grid');
+      const tab = this.tab.shop;
+      if (tab === 'step') {
+        D.STEPS.forEach((st, i) => {
+          if (i === 0) return;
+          const owned = s.stepTier >= i;
+          const next = s.stepTier + 1 === i;
+          const c = el('div', 'card' + (owned ? ' eq' : ''));
+          c.appendChild(el('h3', '', `Nút <b>${i + 1}</b> · +${U.fmt(st.step)} / step`));
+          c.appendChild(el('div', 'meta', `Giá: ${U.fmt(st.wins)} 🏆`));
+          const b = el('button', 'btn' + (owned ? ' gray' : next && s.wins >= st.wins ? ' gold' : ' gray'), owned ? '✔ Đã sở hữu' : next ? 'Mua' : '🔒 Mua nút trước');
+          b.disabled = owned || !next;
+          b.onclick = () => g.buyStep(i);
+          c.appendChild(b);
+          grid.appendChild(c);
+        });
+        sh.body.appendChild(grid);
+        sh.body.appendChild(el('div', 'note', 'Mẹo: trong Lobby có hàng phím số 2–8 — bước lên phím tương ứng cũng mua được nâng cấp.'));
+      } else if (tab === 'tread') {
+        D.TREADMILLS.forEach((t, i) => {
+          const owned = s.treadOwned.includes(i);
+          const eq = s.treadEq === i;
+          const c = el('div', 'card' + (eq ? ' eq' : ''));
+          c.appendChild(el('h3', '', t.name));
+          const sw = el('div', 'sw');
+          sw.style.background = `linear-gradient(90deg, ${t.color}, ${t.glow})`;
+          c.appendChild(sw);
+          c.appendChild(el('div', 'meta', `Hệ số Speed: <b>${U.fmtMult(t.mult)}</b>` + (owned ? '' : ` · Giá: ${U.fmt(t.cost)} 🏆`)));
+          let b;
+          if (eq) { b = el('button', 'btn gray', '✔ Đang dùng'); b.disabled = true; }
+          else if (owned) { b = el('button', 'btn', 'Dùng'); b.onclick = () => g.equipTread(i); }
+          else { b = el('button', 'btn ' + (s.wins >= t.cost ? 'gold' : 'gray'), 'Mua'); b.onclick = () => g.buyTread(i); }
+          c.appendChild(b);
+          grid.appendChild(c);
+        });
+        sh.body.appendChild(grid);
+        sh.body.appendChild(el('div', 'note', 'Đứng trên treadmill ở lobby hoặc đầu mỗi stage để nhân Speed khi chạy tại chỗ. (Game gốc bán treadmill bằng Robux; ở đây dùng Wins.)'));
+      } else {
+        const list = tab === 'trail' ? D.TRAILS : D.AURAS;
+        const owned = tab === 'trail' ? s.trailsOwned : s.aurasOwned;
+        const eqIdx = tab === 'trail' ? s.trailEq : s.auraEq;
+        list.forEach((t, i) => {
+          const has = owned.includes(i);
+          const eq = eqIdx === i;
+          const c = el('div', 'card' + (eq ? ' eq' : ''));
+          c.appendChild(el('h3', '', t.name));
+          const sw = el('div', 'sw');
+          sw.style.background = t.color === 'rainbow' ? 'linear-gradient(90deg,#ff4d4d,#ffd23f,#6df0b0,#4dc3ff,#b57bff)' : `linear-gradient(90deg, ${t.color[0]}, ${t.color[1]})`;
+          c.appendChild(sw);
+          c.appendChild(el('div', 'meta', `Hệ số Speed: <b>${U.fmtMult(t.mult)}</b>` + (has ? '' : ` · Giá: ${U.fmt(t.cost)} 🏆`)));
+          let b;
+          if (eq) { b = el('button', 'btn gray', 'Tháo ra'); b.onclick = () => g.equipCosmetic(tab, -1); }
+          else if (has) { b = el('button', 'btn', 'Trang bị'); b.onclick = () => g.equipCosmetic(tab, i); }
+          else { b = el('button', 'btn ' + (s.wins >= t.cost ? 'gold' : 'gray'), 'Mua'); b.onclick = () => g.buyCosmetic(tab, i); }
+          c.appendChild(b);
+          grid.appendChild(c);
+        });
+        sh.body.appendChild(grid);
+        sh.body.appendChild(el('div', 'note', 'Hệ số của Trail/Aura là ước lượng (game gốc không công bố chính xác).'));
+      }
+      return sh;
+    }
+
+    // ---- Rebirth
+    renderRebirth() {
+      const g = this.g;
+      const s = g.state;
+      const sh = this.shell('🔄 Rebirth', '#c9a6ff', '#8a5cff');
+      const lvl = g.level();
+      const next = D.REBIRTHS[s.rebirths];
+      const cur = s.rebirths ? D.REBIRTHS[s.rebirths - 1].mult : 1;
+      sh.body.appendChild(el('div', 'row', `<span>Hệ số hiện tại</span><span class="big">${U.fmtMult(cur)}</span>`));
+      if (next) {
+        const need = D.speedForLevel(next.level);
+        sh.body.appendChild(el('div', 'row', `<span>Rebirth tiếp theo (#${next.n})</span><span>Lv <b>${next.level}</b> → <b>${U.fmtMult(next.mult)}</b></span>`));
+        const bar = el('div', 'bar');
+        bar.appendChild(el('i'));
+        bar.firstChild.style.width = (U.clamp(s.speed / need, 0, 1) * 100).toFixed(1) + '%';
+        sh.body.appendChild(bar);
+        sh.body.appendChild(el('div', 'note', `Level hiện tại: <b>${lvl}</b> · Speed ${U.fmt(s.speed)} / ${U.fmt(need)}`));
+        const b = el('button', 'btn pink', lvl >= next.level ? 'REBIRTH!' : `Cần Lv ${next.level}`);
+        b.style.width = '100%';
+        b.style.fontSize = '22px';
+        b.disabled = lvl < next.level;
+        b.onclick = () => g.rebirth();
+        sh.body.appendChild(b);
+      } else {
+        sh.body.appendChild(el('div', 'note', '🎉 Bạn đã đạt Rebirth tối đa!'));
+      }
+      sh.body.appendChild(el('div', 'note', 'Rebirth đặt lại <b>Speed</b> và Level về 0, nhưng giữ Wins, Trails, Auras, Treadmill và Step Power.'));
+      const t = el('table', 'rb');
+      t.innerHTML = '<tr><th>#</th><th>Level cần</th><th>Hệ số Speed</th></tr>';
+      D.REBIRTHS.forEach((r) => {
+        const tr = el('tr', r.n <= s.rebirths ? 'done' : r.n === s.rebirths + 1 ? 'cur' : '');
+        tr.innerHTML = `<td>${r.n}</td><td>${r.level}</td><td>${U.fmtMult(r.mult)}</td>`;
+        t.appendChild(tr);
+      });
+      sh.body.appendChild(t);
+      return sh;
+    }
+
+    // ---- Stages
+    renderStages() {
+      const g = this.g;
+      const s = g.state;
+      const sh = this.shell('🏁 Stages', '#7fe0ff', '#2f9bff');
+      sh.body.appendChild(el('div', 'note', 'Chạm bệ vàng <b>WIN</b> cuối mỗi stage để nhận Wins rồi bị đưa về Spawn. Dùng bảng này để quay lại checkpoint đã mở khoá.'));
+      const grid = el('div', 'grid');
+      const sp = el('div', 'card stage-card');
+      sp.innerHTML = '<div class="top" style="background:linear-gradient(90deg,#ff9ec7,#b57bff)"><span>🏠 Spawn</span></div>';
+      const sbd = el('div', 'bd', '<div class="meta">Lobby: treadmill, Shop, Rebirth</div>');
+      const sb = el('button', 'btn pink', 'Teleport');
+      sb.onclick = () => g.teleportSpawn();
+      sbd.appendChild(sb);
+      sp.appendChild(sbd);
+      grid.appendChild(sp);
+      D.STAGES.forEach((st, i) => {
+        const unlocked = i <= s.maxStage;
+        const c = el('div', 'card stage-card' + (unlocked ? '' : ' lock'));
+        const top = el('div', 'top', `<span>#${i + 1}</span><span>+${U.fmt(st.wins)} 🏆</span>`);
+        top.style.background = `linear-gradient(90deg, ${st.caps[0]}, ${st.accent})`;
+        c.appendChild(top);
+        const bd = el('div', 'bd');
+        bd.appendChild(el('h3', '', st.name));
+        bd.appendChild(el('div', 'meta', `Speed khuyến nghị: <b>${U.fmt(st.rec)}</b>`));
+        const b = el('button', 'btn ' + (unlocked ? '' : 'gray'), unlocked ? 'Teleport' : '🔒 Chưa mở');
+        b.disabled = !unlocked;
+        b.onclick = () => g.teleportStage(i);
+        bd.appendChild(b);
+        c.appendChild(bd);
+        grid.appendChild(c);
+      });
+      sh.body.appendChild(grid);
+      return sh;
+    }
+
+    // ---- Settings
+    renderSettings() {
+      const g = this.g;
+      const st = g.state.settings;
+      const sh = this.shell('⚙️ Cài đặt', '#b9c4d6', '#7a8aa6');
+      sh.body.appendChild(el('div', 'note', '<b>Âm thanh bước chân (ASMR)</b>'));
+      const rd = el('div', 'radio');
+      D.PACKS.forEach((p) => {
+        const c = el('button', 'chip' + (st.pack === p.id ? ' on' : ''), p.name);
+        c.onclick = () => { g.setPack(p.id); this.render(true); };
+        rd.appendChild(c);
+      });
+      sh.body.appendChild(rd);
+      const slider = (label, min, max, step, val, fn) => {
+        const wrap = el('div', '', `<div class="note"><b>${label}</b></div>`);
+        const r = el('input');
+        r.type = 'range'; r.min = min; r.max = max; r.step = step; r.value = val;
+        r.oninput = () => fn(parseFloat(r.value));
+        wrap.appendChild(r);
+        return wrap;
+      };
+      sh.body.appendChild(slider('Âm lượng', 0, 1, 0.05, st.vol, (v) => g.setVolume(v)));
+      sh.body.appendChild(slider('Độ nhạy camera', 0.3, 2.5, 0.1, st.sens, (v) => g.setSens(v)));
+      const rd2 = el('div', 'radio');
+      [['Bóng đổ: Bật', true], ['Bóng đổ: Tắt (nhẹ máy)', false]].forEach(([label, v]) => {
+        const c = el('button', 'chip' + (st.shadows === v ? ' on' : ''), label);
+        c.onclick = () => { g.setShadows(v); this.render(true); };
+        rd2.appendChild(c);
+      });
+      sh.body.appendChild(el('div', 'note', '<b>Đồ hoạ</b>'));
+      sh.body.appendChild(rd2);
+      sh.body.appendChild(el('div', 'note', '<b>Điều khiển</b>'));
+      const k = el('div', 'keys');
+      k.innerHTML = '<kbd>W A S D</kbd><span>Di chuyển (hoặc phím mũi tên)</span><kbd>Space</kbd><span>Nhảy</span><kbd>Kéo chuột</kbd><span>Xoay camera</span><kbd>I / O</kbd><span>Zoom vào / ra (hoặc lăn chuột)</span><kbd>Tab</kbd><span>Bảng xếp hạng</span><kbd>B R T</kbd><span>Shop · Rebirth · Stages</span><kbd>Esc</kbd><span>Cài đặt / đóng bảng</span>';
+      sh.body.appendChild(k);
+      const row = el('div', 'row');
+      const help = el('button', 'btn', '❓ Hướng dẫn');
+      help.onclick = () => this.show('help');
+      const reset = el('button', 'btn red', '🗑 Xoá tiến trình');
+      let armed = false;
+      reset.onclick = () => {
+        // xác nhận ngay trong trang (confirm() bị chặn trong khung artifact)
+        if (!armed) {
+          armed = true;
+          reset.textContent = 'Bấm lần nữa để xoá hết';
+          setTimeout(() => { armed = false; reset.textContent = '🗑 Xoá tiến trình'; }, 4000);
+          return;
+        }
+        g.resetSave();
+      };
+      row.appendChild(help);
+      row.appendChild(reset);
+      sh.body.appendChild(row);
+      return sh;
+    }
+
+    // ---- Leaderboard
+    renderBoard() {
+      const g = this.g;
+      const sh = this.shell('📋 Bảng xếp hạng server', '#ffe27a', '#f59e0b');
+      const rows = g.leaderboard();
+      const hd = el('div', 'lbrow hd', '<span>#</span><span>Người chơi</span><span>Speed</span><span>Wins</span>');
+      sh.body.appendChild(hd);
+      rows.forEach((r, i) => {
+        const d = el('div', 'lbrow' + (r.me ? ' me' : ''), `<span>${i + 1}</span><span>${r.name}${r.me ? ' (bạn)' : ' · bot'}</span><span>${U.fmt(r.speed)}</span><span>${U.fmt(r.wins)}</span>`);
+        sh.body.appendChild(d);
+      });
+      sh.body.appendChild(el('div', 'note', 'Bản này chơi một mình — các tên khác là bot mô phỏng để giống không khí server của game gốc.'));
+      return sh;
+    }
+
+    // ---- Help
+    renderHelp() {
+      const sh = this.shell('❓ Cách chơi', '#6df0b0', '#1fb877');
+      sh.body.innerHTML = `
+        <div class="note" style="font-size:16px;opacity:1">
+        <p><b>Mục tiêu:</b> chạy trên bàn phím kẹo khổng lồ — <b>mỗi bước chân = +Speed</b>. Speed càng cao bạn chạy càng nhanh, nhảy càng xa, và vượt được các stage khó hơn.</p>
+        <p>🏃 Đứng trên <b>treadmill</b> (lobby / đầu mỗi stage) để cày Speed khi chạy tại chỗ.<br>
+        🏁 Đi hết stage, chạm <b>bệ vàng WIN</b> để nhận Wins (+1 → +25.000) rồi bị đưa về Spawn.<br>
+        🛒 Dùng Wins mua <b>Step Power</b>, <b>Treadmill</b>, <b>Trails</b>, <b>Auras</b> để nhân Speed mỗi bước.<br>
+        🔄 Đạt Level yêu cầu để <b>Rebirth</b>: reset Speed nhưng nhận hệ số nhân vĩnh viễn.<br>
+        ⚠️ Cẩn thận: khe nhảy dài dần, cầu <b>biến mất</b>, sàn di động, thanh quay, <b>Brainrot</b> đuổi, và <b>tia laser</b> (nấp sau khối lớn!). Rơi xuống biển chocolate sẽ về checkpoint gần nhất.<br>
+        💡 Speed quá cao thì rất khó dừng — hãy <b>bấm nhẹ phím di chuyển</b> khi hạ cánh trên phím nhỏ.</p>
+        <p style="font-size:13px;opacity:.75">Bản fan-made không chính thức, không liên kết với SecretVerse Studio hay Roblox.</p>
+        </div>`;
+      const b = el('button', 'btn pink', 'Bắt đầu chơi!');
+      b.style.width = '100%';
+      b.style.fontSize = '22px';
+      b.onclick = () => this.close();
+      sh.body.appendChild(b);
+      return sh;
+    }
+  }
+
+  SKE.UI = UI;
+})();
+
+</script>
+<script>
+/* Vòng lặp game, kinh tế (Speed / Wins / Rebirth), trigger, hiệu ứng */
+(function () {
+  'use strict';
+  const SKE = window.SKE;
+  const THREE = window.THREE;
+  const U = SKE.util;
+  const D = SKE.data;
+  const $ = U.$;
+  const A = SKE.audio;
+
+  const SAVE_KEY = 'ske_save_v1';
+
+  function defaults() {
+    return {
+      speed: 0, wins: 0, rebirths: 0, stepTier: 0,
+      treadOwned: [0], treadEq: 0,
+      trailsOwned: [], trailEq: -1, aurasOwned: [], auraEq: -1,
+      maxStage: 0, steps: 0, totalWins: 0, deaths: 0, helped: false,
+      settings: { pack: 'keyboard', vol: 0.7, sens: 1, shadows: true },
+    };
+  }
+
+  const srgb = (hex) => [((hex >> 16) & 255) / 255, ((hex >> 8) & 255) / 255, (hex & 255) / 255];
+  const hexNum = (h) => parseInt(h.replace('#', ''), 16);
+  function hsl2rgb(h, s, l) {
+    const c = new THREE.Color();
+    c.setHSL(h, s, l, THREE.SRGBColorSpace);
+    const o = {};
+    c.getRGB(o, THREE.SRGBColorSpace);
+    return [o.r, o.g, o.b];
+  }
+
+  function boot() {
+    const canvas = $('#c');
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+    } catch (e) {
+      $('#loading').innerHTML = '<div><h1 class="stroke">Không khởi tạo được WebGL</h1><p>Hãy bật tăng tốc phần cứng trong trình duyệt rồi tải lại trang.</p></div>';
+      return;
+    }
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouch) document.body.classList.add('touch');
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isTouch ? 1.5 : 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(68, window.innerWidth / window.innerHeight, 0.3, 1400);
+    scene.fog = new THREE.Fog('#ffe1f0', 90, 420);
+
+    // ---- ánh sáng
+    const hemi = new THREE.HemisphereLight('#ffffff', '#e0a8d0', 1.7);
+    scene.add(hemi);
+    const sun = new THREE.DirectionalLight('#fff4e0', 2.6);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(isTouch ? 1024 : 2048, isTouch ? 1024 : 2048);
+    const sc = sun.shadow.camera;
+    sc.left = -58; sc.right = 58; sc.top = 58; sc.bottom = -58; sc.near = 10; sc.far = 260;
+    sun.shadow.bias = -0.0006;
+    sun.shadow.normalBias = 0.05;
+    scene.add(sun);
+    scene.add(sun.target);
+
+    // ---- bầu trời
+    const skyMat = new THREE.ShaderMaterial({
+      side: THREE.BackSide, depthWrite: false, fog: false,
+      uniforms: { top: { value: new THREE.Color('#6cc4ff') }, bottom: { value: new THREE.Color('#ffe1f0') } },
+      vertexShader: 'varying vec3 vP;\nvoid main(){\n vP = normalize(position);\n gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\n}',
+      fragmentShader: 'uniform vec3 top;\nuniform vec3 bottom;\nvarying vec3 vP;\nvoid main(){\n float h = smoothstep(-0.05, 0.75, vP.y);\n gl_FragColor = vec4(mix(bottom, top, h), 1.0);\n#include <colorspace_fragment>\n}',
+    });
+    const sky = new THREE.Mesh(new THREE.SphereGeometry(1000, 24, 16), skyMat);
+    sky.frustumCulled = false;
+    sky.renderOrder = -10;
+    scene.add(sky);
+
+    // ---- thế giới / người chơi
+    const world = new SKE.World(scene);
+    const player = new SKE.Player(world);
+    scene.add(player.avatar.group);
+    const input = new SKE.Input(canvas);
+    const cam = new SKE.CameraRig(camera);
+    const glowFx = new SKE.Particles(scene, 1400, true);
+    const solidFx = new SKE.Particles(scene, 900, false);
+
+    const state = Object.assign(defaults(), U.load(SAVE_KEY, {}));
+    state.settings = Object.assign(defaults().settings, state.settings || {});
+    ['treadOwned', 'trailsOwned', 'aurasOwned'].forEach((k) => { if (!Array.isArray(state[k])) state[k] = defaults()[k]; });
+    if (!state.treadOwned.includes(0)) state.treadOwned.push(0);
+
+    // ------------------------------------------------------------ trạng thái runtime
+    const rt = {
+      time: 0, stepTimer: 0.1, foot: 0, checkpoint: world.lobbyCk, curStage: -2, dying: false, winLock: false,
+      lastPad: null, lastLvl: 1, hudAcc: 0, saveAcc: 0, panel: false, trailAcc: 0, auraAcc: 0, themeT: 0, splashed: false,
+      sparkAcc: 0, lastLevelSound: 0, airTime: 0,
+    };
+    const themeNow = { top: new THREE.Color('#6cc4ff'), bottom: new THREE.Color('#ffe1f0'), fog: new THREE.Color('#ffe1f0'), sea: new THREE.Color('#7a4a35'), light: 1 };
+    const projV = new THREE.Vector3();
+
+    // ------------------------------------------------------------ game API
+    const game = {
+      state, world, player, input, cam, rt, renderer, scene, camera,
+      mults() {
+        const reb = state.rebirths ? D.REBIRTHS[state.rebirths - 1].mult : 1;
+        const trail = state.trailEq >= 0 ? D.TRAILS[state.trailEq].mult : 1;
+        const aura = state.auraEq >= 0 ? D.AURAS[state.auraEq].mult : 1;
+        const tread = D.TREADMILLS[state.treadEq].mult;
+        const step = D.STEPS[state.stepTier].step;
+        return { reb, trail, aura, tread, step, perStep: step * reb * trail * aura, treadmill: tread };
+      },
+      level() { return D.levelFromSpeed(state.speed); },
+      canAffordSomething() {
+        const w = state.wins;
+        const ns = D.STEPS[state.stepTier + 1];
+        if (ns && w >= ns.wins) return true;
+        if (D.TREADMILLS.some((t, i) => !state.treadOwned.includes(i) && w >= t.cost)) return true;
+        if (D.TRAILS.some((t, i) => !state.trailsOwned.includes(i) && w >= t.cost)) return true;
+        if (D.AURAS.some((t, i) => !state.aurasOwned.includes(i) && w >= t.cost)) return true;
+        return false;
+      },
+      onPanel(open) {
+        rt.panel = open;
+        if (open) { input.keys.clear(); input.stick.x = input.stick.y = 0; }
+        ui.hud();
+      },
+      save() { U.save(SAVE_KEY, state); },
+      changed() { ui.hud(); ui.refresh(); world.refreshPads(state); game.save(); },
+
+      buyStep(i) {
+        const st = D.STEPS[i];
+        if (i !== state.stepTier + 1) return false;
+        if (state.wins < st.wins) { A.deny(); ui.toast('Chưa đủ Wins!', 'bad', 1.6); return false; }
+        state.wins -= st.wins;
+        state.stepTier = i;
+        A.buy();
+        ui.toast(`Step Power +${U.fmt(st.step)} mỗi bước!`, 'good');
+        burst(player.pos.x, player.pos.y + 1.2, player.pos.z, 30, [255, 226, 122]);
+        game.changed();
+        return true;
+      },
+      buyTread(i) {
+        const t = D.TREADMILLS[i];
+        if (state.treadOwned.includes(i)) return;
+        if (state.wins < t.cost) { A.deny(); ui.toast('Chưa đủ Wins!', 'bad', 1.6); return; }
+        state.wins -= t.cost;
+        state.treadOwned.push(i);
+        game.equipTread(i, true);
+        A.buy();
+        ui.toast(`${t.name} ${U.fmtMult(t.mult)}!`, 'good');
+      },
+      equipTread(i, silent) {
+        state.treadEq = i;
+        world.setTreadmillTier(i);
+        if (!silent) A.click();
+        game.changed();
+      },
+      buyCosmetic(kind, i) {
+        const list = kind === 'trail' ? D.TRAILS : D.AURAS;
+        const owned = kind === 'trail' ? state.trailsOwned : state.aurasOwned;
+        const t = list[i];
+        if (owned.includes(i)) return;
+        if (state.wins < t.cost) { A.deny(); ui.toast('Chưa đủ Wins!', 'bad', 1.6); return; }
+        state.wins -= t.cost;
+        owned.push(i);
+        A.buy();
+        ui.toast(`${t.name} ${U.fmtMult(t.mult)}!`, 'good');
+        game.equipCosmetic(kind, i, true);
+      },
+      equipCosmetic(kind, i, silent) {
+        if (kind === 'trail') state.trailEq = i;
+        else state.auraEq = i;
+        if (!silent) A.click();
+        game.changed();
+      },
+      rebirth() {
+        const next = D.REBIRTHS[state.rebirths];
+        if (!next || game.level() < next.level) { A.deny(); return; }
+        state.rebirths++;
+        state.speed = 0;
+        rt.lastLvl = 1;
+        A.rebirth();
+        ui.close();
+        ui.banner('REBIRTH ' + state.rebirths, U.fmtMult(next.mult), '#e5d1ff');
+        ui.toast(`Rebirth thành công! Mỗi bước nhân ${U.fmtMult(next.mult)}`, 'purple', 3.2);
+        teleportCk(world.lobbyCk, true);
+        setTimeout(() => confetti(player.pos.x, player.pos.y + 1, player.pos.z, 160), 400);
+        game.changed();
+      },
+      teleportStage(i) {
+        if (i > state.maxStage) return;
+        ui.close();
+        teleportCk(world.plazaCk[i], true);
+      },
+      teleportSpawn() {
+        ui.close();
+        teleportCk(world.lobbyCk, true);
+      },
+      setPack(id) { state.settings.pack = id; A.setPack(id); A.resume(); A.step(1); game.save(); },
+      setVolume(v) { state.settings.vol = v; A.setVolume(v); game.save(); },
+      setSens(v) { state.settings.sens = v; input.sens = v; game.save(); },
+      setShadows(v) {
+        state.settings.shadows = v;
+        renderer.shadowMap.enabled = v;
+        sun.castShadow = v;
+        scene.traverse((o) => { if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { m.needsUpdate = true; }); } });
+        game.save();
+      },
+      resetSave() {
+        try { window.localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ }
+        window.location.reload();
+      },
+      leaderboard() {
+        const rows = D.BOTS.map((name, i) => {
+          const base = 2000 * Math.pow(6.5, 6 - i) * (1 + 0.04 * Math.sin(rt.time * 0.3 + i * 2));
+          return { name, speed: base, wins: Math.floor(base / 2500) + i * 40 };
+        });
+        rows.push({ name: 'Bạn', speed: state.speed, wins: state.totalWins, me: true });
+        rows.sort((a, b) => b.speed - a.speed);
+        return rows;
+      },
+    };
+
+    const ui = new SKE.UI(game);
+    game.ui = ui;
+
+    // ------------------------------------------------------------ hiệu ứng
+    function burst(x, y, z, n, rgb) {
+      for (let i = 0; i < n; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 2 + Math.random() * 6;
+        glowFx.emit(x, y, z, Math.cos(a) * s, 2 + Math.random() * 6, Math.sin(a) * s, 0.7 + Math.random() * 0.5, 0.5 + Math.random() * 0.4, rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, 8);
+      }
+    }
+    function confetti(x, y, z, n) {
+      const cols = ['#ff6fa5', '#ffd23f', '#6df0b0', '#6cc4ff', '#b57bff', '#ffffff'];
+      for (let i = 0; i < n; i++) {
+        const c = srgb(hexNum(cols[(Math.random() * cols.length) | 0]));
+        const a = Math.random() * Math.PI * 2;
+        const s = 3 + Math.random() * 11;
+        solidFx.emit(x, y, z, Math.cos(a) * s, 6 + Math.random() * 14, Math.sin(a) * s, 1.4 + Math.random() * 1.2, 0.35 + Math.random() * 0.35, c[0], c[1], c[2], 22);
+      }
+    }
+    function puff(x, y, z, rgb, n) {
+      for (let i = 0; i < n; i++) {
+        const a = Math.random() * Math.PI * 2;
+        solidFx.emit(x + Math.cos(a) * 0.3, y + 0.1, z + Math.sin(a) * 0.3, Math.cos(a) * 2.2, 0.8 + Math.random() * 1.2, Math.sin(a) * 2.2, 0.35, 0.3 + Math.random() * 0.25, rgb[0], rgb[1], rgb[2], 3);
+      }
+    }
+    function splash(x, z) {
+      for (let i = 0; i < 40; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 2 + Math.random() * 6;
+        solidFx.emit(x, world.seaY + 0.3, z, Math.cos(a) * s, 6 + Math.random() * 10, Math.sin(a) * s, 1.1, 0.5 + Math.random() * 0.5, 0.45, 0.25, 0.12, 24);
+      }
+    }
+    function trailColor(def, t) {
+      if (def.color === 'rainbow') return hsl2rgb((t * 0.6 + Math.random() * 0.1) % 1, 1, 0.6);
+      const c = srgb(hexNum(def.color[Math.random() < 0.5 ? 0 : 1]));
+      return c;
+    }
+
+    // ------------------------------------------------------------ teleport / respawn
+    function placeAt(ck) {
+      player.place(ck.x, ck.y + 0.05, ck.z);
+      player.avatar.yaw = ck.yaw + Math.PI;
+      cam.snap(player.pos, ck.yaw);
+      rt.stepTimer = 0.1;
+      rt.splashed = false;
+    }
+    function teleportCk(ck, fade) {
+      rt.checkpoint = ck.stage === -1 || ck.plaza ? ck : rt.checkpoint;
+      rt.winLock = true;
+      if (fade) {
+        ui.fade(true);
+        setTimeout(() => {
+          placeAt(ck);
+          rt.checkpoint = ck;
+          player.invuln = 1.0;
+          setTimeout(() => { ui.fade(false); rt.winLock = false; }, 120);
+        }, 380);
+      } else {
+        placeAt(ck);
+        rt.checkpoint = ck;
+        rt.winLock = false;
+      }
+    }
+    function kill(reason) {
+      if (rt.dying || player.invuln > 0) return;
+      rt.dying = true;
+      state.deaths++;
+      A.die();
+      ui.flash();
+      cam.shake = 0.6;
+      burst(player.pos.x, player.pos.y + 1, player.pos.z, 36, [255, 111, 165]);
+      const msg = { laser: 'Bị tia laser bắn trúng!', brainrot: 'Brainrot bắt được bạn!', spinner: 'Trúng thanh quay!', fall: 'Rơi xuống biển chocolate!' }[reason] || 'Oops!';
+      ui.toast(msg, 'bad', 1.6);
+      player.avatar.group.visible = false;
+      setTimeout(() => {
+        placeAt(rt.checkpoint);
+        player.invuln = 1.6;
+        player.avatar.group.visible = true;
+        rt.dying = false;
+      }, 520);
+    }
+
+    // ------------------------------------------------------------ trigger
+    function onWin(stageIdx) {
+      if (rt.winLock) return;
+      rt.winLock = true;
+      const st = D.STAGES[stageIdx];
+      state.wins += st.wins;
+      state.totalWins += st.wins;
+      state.maxStage = Math.max(state.maxStage, Math.min(D.STAGES.length - 1, stageIdx + 1));
+      A.win();
+      confetti(player.pos.x, player.pos.y + 1, player.pos.z, 120);
+      ui.toast(`+${U.fmt(st.wins)} WINS!`, '', 2.6, true);
+      if (stageIdx < D.STAGES.length - 1) ui.toast(`Đã mở checkpoint Stage ${stageIdx + 2} — bấm T để teleport`, 'info', 3);
+      game.changed();
+      setTimeout(() => {
+        ui.fade(true);
+        setTimeout(() => {
+          placeAt(world.lobbyCk);
+          rt.checkpoint = world.lobbyCk;
+          player.invuln = 1;
+          setTimeout(() => { ui.fade(false); rt.winLock = false; }, 120);
+        }, 380);
+      }, 900);
+    }
+    function onPad(pad) {
+      if (pad.type === 'shop') ui.show('shop');
+      else if (pad.type === 'rebirth') ui.show('rebirth');
+      else if (pad.type === 'step') {
+        if (state.stepTier >= pad.tier) ui.toast('Bạn đã sở hữu nút này rồi ✔', 'info', 1.4);
+        else if (!game.buyStep(pad.tier)) { /* buyStep tự báo lỗi */ if (pad.tier !== state.stepTier + 1) ui.toast('Hãy mua các nút số trước đó trước!', 'bad', 1.6); }
+      }
+    }
+
+    // ------------------------------------------------------------ bước chân
+    function doStep(onTread) {
+      const m = game.mults();
+      const gain = m.perStep * (onTread ? m.tread : 1);
+      state.speed += gain;
+      state.steps++;
+      rt.foot ^= 1;
+      A.step((rt.foot ? 1.0 : 0.93) * (0.94 + Math.random() * 0.12));
+      const g = player.ground;
+      if (g && g.pr) world.press(g);
+      const gcol = g && g.kind === 'key' ? [1, 1, 1] : [1, 0.9, 0.95];
+      puff(player.pos.x, player.pos.y, player.pos.z, gcol, 3);
+      projV.set(player.pos.x, player.pos.y + 2.4, player.pos.z).project(camera);
+      if (projV.z < 1) {
+        const x = (projV.x * 0.5 + 0.5) * window.innerWidth + (rt.foot ? 18 : -18);
+        const y = (-projV.y * 0.5 + 0.5) * window.innerHeight;
+        ui.popup(`+${U.fmt(gain)}`, x, y, onTread && m.tread > 1 ? 'gold' : '');
+      }
+      const lvl = game.level();
+      if (lvl > rt.lastLvl) {
+        if (rt.time - rt.lastLevelSound > 1.2) {
+          A.levelUp();
+          ui.toast(`⬆ Level ${lvl}`, 'info', 1.4);
+          rt.lastLevelSound = rt.time;
+        }
+        rt.lastLvl = lvl;
+      }
+      rt.hudDirty = true;
+    }
+
+    // ------------------------------------------------------------ hiệu ứng trail/aura mỗi frame
+    function updateCosmetics(dt, horiz) {
+      const p = player.pos;
+      if (state.trailEq >= 0 && player.grounded && horiz > 2) {
+        const def = D.TRAILS[state.trailEq];
+        rt.trailAcc += dt * 70;
+        while (rt.trailAcc > 1) {
+          rt.trailAcc -= 1;
+          const c = trailColor(def, rt.time);
+          glowFx.emit(p.x + (Math.random() - 0.5) * 0.7, p.y + 0.15, p.z + (Math.random() - 0.5) * 0.7, (Math.random() - 0.5) * 0.8, 0.4 + Math.random() * 0.6, (Math.random() - 0.5) * 0.8, 0.7, 0.55 + Math.random() * 0.35, c[0], c[1], c[2], 0);
+        }
+      }
+      if (state.auraEq >= 0) {
+        const def = D.AURAS[state.auraEq];
+        rt.auraAcc += dt * 48;
+        while (rt.auraAcc > 1) {
+          rt.auraAcc -= 1;
+          const a = Math.random() * Math.PI * 2;
+          const r = 0.8 + Math.random() * 0.4;
+          const c = trailColor(def, rt.time + 0.5);
+          let vy = 1.4 + Math.random() * 1.2;
+          let tang = 0;
+          if (def.id === 'fire') vy = 3 + Math.random() * 2;
+          if (def.id === 'wind') { vy = 0.4; tang = 5; }
+          if (def.id === 'water') vy = 0.8 + Math.random();
+          const sys = def.id === 'void' ? solidFx : glowFx;
+          sys.emit(p.x + Math.cos(a) * r, p.y + 0.2 + Math.random() * 1.8, p.z + Math.sin(a) * r, -Math.sin(a) * tang, vy, Math.cos(a) * tang, def.id === 'wind' ? 0.5 : 0.9, 0.45 + Math.random() * 0.45, c[0], c[1], c[2], 0);
+        }
+      }
+    }
+
+    // ------------------------------------------------------------ theme theo stage
+    function updateTheme(dt, stageIdx) {
+      const st = stageIdx >= 0 ? D.STAGES[stageIdx] : null;
+      const top = st ? st.sky[0] : '#6cc4ff';
+      const bot = st ? st.sky[1] : '#ffe1f0';
+      const fog = st ? st.fog : '#ffe1f0';
+      const light = st && st.dark ? 0.55 : 1;
+      const k = 1 - Math.exp(-1.6 * dt);
+      themeNow.top.lerp(new THREE.Color(top), k);
+      themeNow.bottom.lerp(new THREE.Color(bot), k);
+      themeNow.fog.lerp(new THREE.Color(fog), k);
+      themeNow.light += (light - themeNow.light) * k;
+      const seaT = new THREE.Color(st ? st.deck : '#5b3426').lerp(new THREE.Color(fog), 0.15);
+      themeNow.sea.lerp(seaT, k);
+      skyMat.uniforms.top.value.copy(themeNow.top);
+      skyMat.uniforms.bottom.value.copy(themeNow.fog);
+      scene.fog.color.copy(themeNow.fog);
+      hemi.intensity = 1.7 * themeNow.light;
+      sun.intensity = 2.6 * (0.45 + 0.55 * themeNow.light);
+    }
+
+    // ------------------------------------------------------------ phím tắt
+    input.onKey((k) => {
+      A.resume();
+      if (k === 'Escape') { if (ui.open) ui.close(); else ui.show('settings'); return; }
+      if (k === 'b') ui.toggle('shop');
+      else if (k === 'r') ui.toggle('rebirth');
+      else if (k === 't') ui.toggle('stages');
+      else if (k === 'Tab') ui.toggle('board');
+      else if (k === 'h') ui.toggle('help');
+      else if (k === 'e' && ui.open === 'rebirth') game.rebirth();
+    });
+    window.addEventListener('pointerdown', () => A.resume(), { once: false });
+
+    // ------------------------------------------------------------ touch controls
+    (function touchSetup() {
+      const stick = $('#stick');
+      const knob = $('#knob');
+      let id = null;
+      const move = (e) => {
+        const r = stick.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        let dx = (e.clientX - cx) / (r.width / 2);
+        let dy = (e.clientY - cy) / (r.height / 2);
+        const l = Math.hypot(dx, dy);
+        if (l > 1) { dx /= l; dy /= l; }
+        input.stick.x = dx;
+        input.stick.y = -dy;
+        knob.style.transform = `translate(${dx * 38}px, ${dy * 38}px)`;
+      };
+      stick.addEventListener('pointerdown', (e) => { id = e.pointerId; stick.setPointerCapture(id); move(e); A.resume(); });
+      stick.addEventListener('pointermove', (e) => { if (e.pointerId === id) move(e); });
+      const end = (e) => { if (e.pointerId === id) { id = null; input.stick.x = input.stick.y = 0; knob.style.transform = ''; } };
+      stick.addEventListener('pointerup', end);
+      stick.addEventListener('pointercancel', end);
+      const jb = $('#jumpBtn');
+      jb.addEventListener('pointerdown', (e) => { e.preventDefault(); input.jumpQueued = true; A.resume(); });
+    })();
+
+    // ------------------------------------------------------------ resize
+    function resize() {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('beforeunload', () => game.save());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) game.save(); });
+
+    // ------------------------------------------------------------ khởi tạo trạng thái
+    A.setPack(state.settings.pack);
+    A.setVolume(state.settings.vol);
+    input.sens = state.settings.sens;
+    if (!state.settings.shadows) game.setShadows(false);
+    world.setTreadmillTier(state.treadEq);
+    world.refreshPads(state);
+    placeAt(world.lobbyCk);
+    rt.lastLvl = game.level();
+    ui.setStage(null);
+    ui.hud();
+
+    // ------------------------------------------------------------ vòng lặp
+    const ctx = { player, audio: A, kill, seaColor: themeNow.sea };
+    let last = performance.now();
+    function update(dt) {
+      rt.time += dt;
+      const t = rt.time;
+
+      // camera orbit
+      cam.yaw += input.camYawDelta;
+      cam.pitch = U.clamp(cam.pitch + input.camPitchDelta, -0.05, 1.3);
+      input.camYawDelta = 0;
+      input.camPitchDelta = 0;
+      if (input.zoom) { cam.dist = U.clamp(cam.dist * (1 + 0.1 * input.zoom), 5, 44); input.zoom = 0; }
+      if (!rt.panel) {
+        if (input.keys.has('i')) cam.dist = U.clamp(cam.dist - 14 * dt, 5, 44);
+        if (input.keys.has('o')) cam.dist = U.clamp(cam.dist + 14 * dt, 5, 44);
+      }
+
+      world.update(dt, t, ctx);
+
+      const moveSpeed = D.moveSpeed(state.speed);
+      let ax = 0;
+      let ay = 0;
+      let jump = false;
+      if (rt.auto) {
+        // autopilot (chỉ dùng cho kiểm thử)
+        const r = rt.auto(dt, player, cam);
+        if (r && !rt.dying && !rt.winLock) {
+          const sy = Math.sin(cam.yaw);
+          const cy = Math.cos(cam.yaw);
+          ay = r.dx * -sy + r.dz * -cy;
+          ax = r.dx * cy + r.dz * -sy;
+          jump = !!r.jump;
+        }
+      } else if (!rt.panel && !rt.dying && !rt.winLock) {
+        const a = input.axes();
+        ax = a.ax; ay = a.ay;
+        jump = input.takeJump();
+      } else input.jumpQueued = false;
+      if (rt.dying) { player.vel.set(0, 0, 0); } else {
+        player.update(dt, { ax, ay, jump, camYaw: cam.yaw }, moveSpeed, A);
+      }
+      const g = player.ground;
+      const horiz = Math.hypot(player.vel.x, player.vel.z);
+
+      // trigger theo mặt đứng
+      if (g && !rt.dying) {
+        if (g.kind === 'win') onWin(g.stage);
+        if (g.kind === 'pad') { if (rt.lastPad !== g) { rt.lastPad = g; onPad(g.pad); } } else rt.lastPad = null;
+        if (g.owner && g.owner.touch) g.owner.touch();
+        if (g.ck && g.ck !== rt.checkpoint && !rt.winLock) {
+          rt.checkpoint = g.ck;
+          if (!g.ck.lobby) { A.checkpoint(); ui.toast('✔ Checkpoint đã lưu', 'good', 1.3); }
+          if (g.ck.plaza && g.ck.stage >= 0 && g.ck.stage > state.maxStage) { state.maxStage = g.ck.stage; game.changed(); }
+        }
+        if (g.stage !== undefined && g.stage !== rt.curStage) {
+          rt.curStage = g.stage;
+          const st = g.stage >= 0 ? D.STAGES[g.stage] : null;
+          ui.setStage(st);
+          if (st) ui.banner(`STAGE ${g.stage + 1}`, st.name, st.accent);
+          else ui.banner('SPAWN', 'Lobby', '#ffd6f0');
+        }
+      } else if (!g) rt.lastPad = null;
+
+      // rơi xuống biển
+      if (!rt.dying) {
+        if (player.pos.y < world.seaY && !rt.splashed) { rt.splashed = true; splash(player.pos.x, player.pos.z); A.splash(); }
+        if (player.pos.y < world.killY) kill('fall');
+        if (player.pos.y > world.seaY + 2) rt.splashed = false;
+      }
+
+      // bước chân
+      const onTread = !!(g && g.kind === 'treadmill');
+      const walking = player.grounded && horiz > 1.5;
+      const running = !rt.dying && (walking || (onTread && player.grounded));
+      const interval = U.clamp(0.42 - 0.0045 * (moveSpeed - 9), 0.2, 0.42);
+      if (running) {
+        rt.stepTimer -= dt;
+        if (rt.stepTimer <= 0) { doStep(onTread); rt.stepTimer += interval; if (rt.stepTimer < 0) rt.stepTimer = interval * 0.5; }
+      } else rt.stepTimer = Math.min(rt.stepTimer, 0.08);
+
+      // avatar
+      const av = player.avatar;
+      if (horiz > 1) av.yaw += U.angleDiff(av.yaw, Math.atan2(player.vel.x, player.vel.z)) * Math.min(1, dt * 16);
+      else if (onTread) av.yaw += U.angleDiff(av.yaw, cam.yaw + Math.PI + Math.PI) * Math.min(1, dt * 8);
+      const runAmt = running ? 1 : 0;
+      av.update(dt, runAmt, 1 / interval / 2, !player.grounded, player.vel.y);
+      if (player.invuln > 0 && !rt.dying) av.group.visible = Math.floor(t * 12) % 2 === 0 || player.invuln < 0.1;
+      else if (!rt.dying) av.group.visible = true;
+
+      updateCosmetics(dt, horiz);
+
+      // camera + ánh sáng + hạt
+      cam.update(dt, player.pos, moveSpeed, horiz);
+      sun.position.set(player.pos.x + 38, player.pos.y + 70, player.pos.z + 26);
+      sun.target.position.copy(player.pos);
+      sun.target.updateMatrixWorld();
+      sky.position.copy(camera.position);
+      updateTheme(dt, rt.curStage >= 0 ? rt.curStage : -1);
+      glowFx.update(dt, window.innerHeight * renderer.getPixelRatio(), camera.fov);
+      solidFx.update(dt, window.innerHeight * renderer.getPixelRatio(), camera.fov);
+
+      // HUD / lưu
+      rt.hudAcc += dt;
+      if (rt.hudDirty || rt.hudAcc > 0.5) { rt.hudDirty = false; rt.hudAcc = 0; ui.hud(); }
+      rt.saveAcc += dt;
+      if (rt.saveAcc > 5) { rt.saveAcc = 0; game.save(); }
+    }
+    game.update = update;
+    function frame(now) {
+      const dt = Math.min(0.05, Math.max(0.0001, (now - last) / 1000));
+      last = now;
+      if (!rt.manual) {
+        update(dt);
+        renderer.render(scene, camera);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    // hướng dẫn lần đầu
+    if (!state.helped) { state.helped = true; setTimeout(() => ui.show('help'), 700); }
+    window.SKE_GAME = game;
+    requestAnimationFrame((n) => { last = n; frame(n); });
+    setTimeout(() => $('#loading').classList.add('done'), 300);
+  }
+
+  // chờ font (tối đa 1.2s) để canvas texture dùng đúng font
+  const fontReady = document.fonts && document.fonts.load
+    ? Promise.race([document.fonts.load('700 24px Fredoka'), new Promise((r) => setTimeout(r, 1200))])
+    : Promise.resolve();
+  fontReady.catch(() => {}).then(boot);
+})();
+
+</script>
