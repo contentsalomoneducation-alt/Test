@@ -295,14 +295,26 @@
       const g = this.g;
       const st = g.state.settings;
       const sh = this.shell('⚙️ Cài đặt', '#b9c4d6', '#7a8aa6');
-      sh.body.appendChild(el('div', 'note', '<b>Âm thanh bước chân (ASMR)</b>'));
-      const rd = el('div', 'radio');
-      D.PACKS.forEach((p) => {
-        const c = el('button', 'chip' + (st.pack === p.id ? ' on' : ''), p.name);
-        c.onclick = () => { g.setPack(p.id); this.render(true); };
-        rd.appendChild(c);
+      const packRow = (title, group) => {
+        sh.body.appendChild(el('div', 'note', `<b>${title}</b>`));
+        const rd = el('div', 'radio');
+        D.PACKS.filter((p) => (p.group === 'key') === group).forEach((p) => {
+          const c = el('button', 'chip' + (st.pack === p.id ? ' on' : ''), p.name);
+          c.onclick = () => { g.setPack(p.id); this.render(true); };
+          rd.appendChild(c);
+        });
+        sh.body.appendChild(rd);
+      };
+      packRow('⌨️ Tiếng bàn phím (mỗi bước chân là một lần gõ phím — bấm để nghe thử)', true);
+      packRow('Âm thanh bước chân ASMR khác', false);
+      sh.body.appendChild(el('div', 'note', 'Phím dài (Shift, Enter, Caps, Tab) nghe trầm hơn và có tiếng rung thanh cân bằng; mỗi phím có cao độ riêng.'));
+      const typing = el('div', 'radio');
+      [['⌨️ Tiếng gõ khi bấm phím điều khiển: Bật', true], ['Tắt', false]].forEach(([label, v]) => {
+        const c = el('button', 'chip' + (st.typing !== false === v ? ' on' : ''), label);
+        c.onclick = () => { g.setTyping(v); this.render(true); };
+        typing.appendChild(c);
       });
-      sh.body.appendChild(rd);
+      sh.body.appendChild(typing);
       const slider = (label, min, max, step, val, fn) => {
         const wrap = el('div', '', `<div class="note"><b>${label}</b></div>`);
         const r = el('input');

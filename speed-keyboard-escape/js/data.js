@@ -103,7 +103,12 @@
 
   // ---- Âm thanh bước chân ----
   D.PACKS = [
-    { id: 'keyboard', name: 'Keyboard Click' },
+    { id: 'keyboard', name: 'Keyboard Click (Blue)', group: 'key' },
+    { id: 'brown', name: 'Brown Switch', group: 'key' },
+    { id: 'red', name: 'Red Linear', group: 'key' },
+    { id: 'thock', name: 'Thocky', group: 'key' },
+    { id: 'typewriter', name: 'Typewriter', group: 'key' },
+    { id: 'laptop', name: 'Laptop', group: 'key' },
     { id: 'chocolate', name: 'Chocolate' },
     { id: 'water', name: 'Water' },
     { id: 'bubbles', name: 'Bubbles' },

@@ -270,7 +270,7 @@
       }
       const box = {
         x0: r.x0, y0: bot, z0: r.z0, x1: r.x1, y1: top, z1: r.z1,
-        kind: o.kind || 'key', stage: this.s, pr: [ps, pe], lr, active: true, stamp: 0,
+        kind: o.kind || 'key', label: o.label || null, stage: this.s, pr: [ps, pe], lr, active: true, stamp: 0,
         ck: o.ck || null, pad: o.pad || null,
       };
       this.w.addStatic(box);

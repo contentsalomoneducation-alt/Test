@@ -16,7 +16,7 @@
       treadOwned: [0], treadEq: 0,
       trailsOwned: [], trailEq: -1, aurasOwned: [], auraEq: -1,
       maxStage: 0, steps: 0, totalWins: 0, deaths: 0, helped: false,
-      settings: { pack: 'keyboard', vol: 0.7, sens: 1, shadows: true },
+      settings: { pack: 'keyboard', vol: 0.7, sens: 1, shadows: true, typing: true },
     };
   }
 
@@ -196,7 +196,18 @@
         ui.close();
         teleportCk(world.lobbyCk, true);
       },
-      setPack(id) { state.settings.pack = id; A.setPack(id); A.resume(); A.step(1); game.save(); },
+      setPack(id) {
+        state.settings.pack = id;
+        A.setPack(id);
+        A.resume();
+        if (A.isKeyPack(id)) A.demo(id); else A.step(1);
+        game.save();
+      },
+      setTyping(v) {
+        state.settings.typing = v;
+        if (v) { A.resume(); A.keyType(true, 'w'); A.keyType(false, 'w'); }
+        game.save();
+      },
       setVolume(v) { state.settings.vol = v; A.setVolume(v); game.save(); },
       setSens(v) { state.settings.sens = v; input.sens = v; game.save(); },
       setShadows(v) {
@@ -343,8 +354,8 @@
       state.speed += gain;
       state.steps++;
       rt.foot ^= 1;
-      A.step((rt.foot ? 1.0 : 0.93) * (0.94 + Math.random() * 0.12));
       const g = player.ground;
+      A.step((rt.foot ? 1.0 : 0.95) * (0.97 + Math.random() * 0.06), { label: g && g.label, pan: rt.foot ? 0.12 : -0.12 });
       if (g && g.pr) world.press(g);
       const gcol = g && g.kind === 'key' ? [1, 1, 1] : [1, 0.9, 0.95];
       puff(player.pos.x, player.pos.y, player.pos.z, gcol, 3);
@@ -469,6 +480,7 @@
 
     // ------------------------------------------------------------ khởi tạo trạng thái
     A.setPack(state.settings.pack);
+    input.typing = (down, key) => { if (state.settings.typing && !rt.dying) A.keyType(down, key); };
     A.setVolume(state.settings.vol);
     input.sens = state.settings.sens;
     if (!state.settings.shadows) game.setShadows(false);

@@ -567,7 +567,12 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
 
   // ---- Âm thanh bước chân ----
   D.PACKS = [
-    { id: 'keyboard', name: 'Keyboard Click' },
+    { id: 'keyboard', name: 'Keyboard Click (Blue)', group: 'key' },
+    { id: 'brown', name: 'Brown Switch', group: 'key' },
+    { id: 'red', name: 'Red Linear', group: 'key' },
+    { id: 'thock', name: 'Thocky', group: 'key' },
+    { id: 'typewriter', name: 'Typewriter', group: 'key' },
+    { id: 'laptop', name: 'Laptop', group: 'key' },
     { id: 'chocolate', name: 'Chocolate' },
     { id: 'water', name: 'Water' },
     { id: 'bubbles', name: 'Bubbles' },
@@ -580,7 +585,7 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
 
 </script>
 <script>
-/* Âm thanh tổng hợp bằng WebAudio (không cần file mp3) — ASMR click + SFX */
+/* Âm thanh tổng hợp bằng WebAudio (không cần file mp3): tiếng bàn phím cơ + SFX */
 (function () {
   'use strict';
   const SKE = (window.SKE = window.SKE || {});
@@ -590,7 +595,15 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
   let noiseBuf = null;
   let volume = 0.7;
   let pack = 'keyboard';
-  let lastStep = 0;
+  let lastStep = -1;
+  let lastType = -1;
+
+  function makeNoise(c) {
+    const b = c.createBuffer(1, c.sampleRate, c.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return b;
+  }
 
   function init() {
     if (ctx) return;
@@ -605,9 +618,7 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
       comp.ratio.value = 6;
       master.connect(comp);
       comp.connect(ctx.destination);
-      noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
-      const d = noiseBuf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      noiseBuf = makeNoise(ctx);
     } catch (e) {
       ctx = null;
     }
@@ -618,7 +629,16 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
     if (ctx && ctx.state === 'suspended') ctx.resume();
   }
 
-  function tone(freq, type, attack, decay, peak, freqEnd, delay) {
+  function out(node, pan) {
+    if (pan && ctx.createStereoPanner) {
+      const p = ctx.createStereoPanner();
+      p.pan.value = Math.max(-1, Math.min(1, pan));
+      node.connect(p);
+      p.connect(master);
+    } else node.connect(master);
+  }
+
+  function tone(freq, type, attack, decay, peak, freqEnd, delay, pan) {
     if (!ctx) return;
     const t = ctx.currentTime + (delay || 0);
     const o = ctx.createOscillator();
@@ -630,12 +650,12 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
     g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + attack);
     g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
     o.connect(g);
-    g.connect(master);
+    out(g, pan);
     o.start(t);
     o.stop(t + attack + decay + 0.05);
   }
 
-  function noise(attack, decay, peak, ftype, ffreq, q, delay) {
+  function noise(attack, decay, peak, ftype, ffreq, q, delay, pan) {
     if (!ctx) return;
     const t = ctx.currentTime + (delay || 0);
     const s = ctx.createBufferSource();
@@ -651,28 +671,107 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
     g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
     s.connect(f);
     f.connect(g);
-    g.connect(master);
+    out(g, pan);
     s.start(t, Math.random() * 0.5);
     s.stop(t + attack + decay + 0.05);
+  }
+
+  // ------------------------------------------------------------------ bàn phím cơ
+  // Mỗi switch: click (tiếng bấm gạt), thock (chạm đáy), ping (tấm đệm kim loại), up (nhả phím)
+  const SWITCH = {
+    keyboard: { click: 1.25, clickF: 3400, tick: 0.7, thock: 0.75, lp: 1800, body: 200, bd: 0.06, ping: 0.45, pingF: 2800, up: 0.55, upF: 5200 }, // Blue — clacky
+    brown: { click: 0.3, clickF: 2600, tick: 0, thock: 0.85, lp: 1400, body: 170, bd: 0.07, ping: 0.15, pingF: 2400, up: 0.3, upF: 4200 }, // Brown — tactile
+    red: { click: 0, clickF: 0, tick: 0, thock: 0.95, lp: 1100, body: 150, bd: 0.09, ping: 0.1, pingF: 2200, up: 0.2, upF: 3800 }, // Red — linear
+    thock: { click: 0, clickF: 0, tick: 0, thock: 1.0, lp: 700, body: 105, bd: 0.13, ping: 0.05, pingF: 1500, up: 0.14, upF: 3000 }, // creamy thock
+    laptop: { click: 0.15, clickF: 2200, tick: 0, thock: 0.5, lp: 2600, body: 260, bd: 0.035, ping: 0, pingF: 0, up: 0.1, upF: 3500 }, // membrane / laptop
+  };
+  const WIDE = ['Shift', 'Enter', 'Caps', 'Tab', '⌫', 'Space'];
+  const ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+  const KEY_PACKS = Object.keys(SWITCH).concat(['typewriter']);
+
+  /** Cao độ theo vị trí phím trên bàn phím QWERTY (trái trầm hơn, phải cao hơn một chút) */
+  function keyPitch(label) {
+    if (!label) return 1;
+    if (WIDE.indexOf(label) >= 0) return 0.82;
+    for (let r = 0; r < ROWS.length; r++) {
+      const c = ROWS[r].indexOf(label);
+      if (c >= 0) return 0.93 + 0.14 * (c / 9) + (r - 1) * 0.015;
+    }
+    return 1;
+  }
+
+  /**
+   * kind: tên switch; p: hệ số cao độ; wide: phím có thanh cân bằng (Shift/Enter/Space…);
+   * vel: 0..1; pan: -1..1; delay: giây; upOnly: chỉ phát tiếng nhả
+   */
+  function keyVoice(kind, p, wide, vel, pan, delay, upOnly, downOnly) {
+    if (!ctx) return;
+    if (kind === 'typewriter') return typewriter(p, vel, pan, delay, upOnly, downOnly);
+    const s = SWITCH[kind] || SWITCH.keyboard;
+    const d0 = delay || 0;
+    if (!upOnly) {
+      if (s.click > 0) noise(0.0008, 0.012, 0.6 * s.click * vel, 'bandpass', s.clickF * p, 1.2, d0, pan);
+      if (s.tick > 0) tone(4300 * p, 'sine', 0.0005, 0.008, 0.2 * s.tick * vel, 0, d0, pan);
+      const bodyF = s.body * p * (wide ? 0.8 : 1);
+      noise(0.001, 0.03, 0.55 * s.thock * vel, 'lowpass', s.lp * p, 0.7, d0 + 0.004, pan);
+      tone(bodyF, 'sine', 0.002, s.bd * (wide ? 1.4 : 1), 0.75 * s.thock * vel * (wide ? 1.25 : 1), bodyF * 0.55, d0 + 0.003, pan);
+      if (s.ping > 0) {
+        tone(s.pingF * p, 'sine', 0.001, 0.03, 0.13 * s.ping * vel, 0, d0 + 0.004, pan);
+        tone(s.pingF * p * 1.51, 'sine', 0.001, 0.02, 0.07 * s.ping * vel, 0, d0 + 0.004, pan);
+      }
+      if (wide) {
+        // thanh cân bằng rung lách cách
+        noise(0.0005, 0.006, 0.32 * vel, 'bandpass', 2300, 3, d0 + 0.012, pan);
+        noise(0.0005, 0.005, 0.2 * vel, 'bandpass', 2700, 3, d0 + 0.03, pan);
+      }
+    }
+    if (!downOnly && s.up > 0) {
+      const du = d0 + (upOnly ? 0 : 0.1);
+      noise(0.0005, 0.008, 0.45 * s.up * vel, 'bandpass', s.upF * p, 1.5, du, pan);
+      tone(s.body * 1.7 * p, 'sine', 0.001, 0.025, 0.2 * s.up * vel, 0, du, pan);
+    }
+  }
+
+  function typewriter(p, vel, pan, delay, upOnly, downOnly) {
+    const d0 = delay || 0;
+    if (!upOnly) {
+      noise(0.0008, 0.02, 0.7 * vel, 'bandpass', 1900 * p, 0.8, d0, pan);
+      [1, 2.76, 5.4].forEach((r, i) => tone(1180 * p * r, 'sine', 0.0008, [0.1, 0.06, 0.035][i], [0.26, 0.15, 0.09][i] * vel, 0, d0 + 0.002, pan));
+      tone(125 * p, 'sine', 0.002, 0.09, 0.6 * vel, 70 * p, d0 + 0.002, pan);
+    }
+    if (!downOnly) {
+      const du = d0 + (upOnly ? 0 : 0.11);
+      noise(0.0005, 0.01, 0.3 * vel, 'bandpass', 3200 * p, 1.2, du, pan);
+    }
   }
 
   const A = (SKE.audio = {
     init,
     resume,
     get ready() { return !!ctx; },
+    keyPacks: KEY_PACKS,
+    isKeyPack(id) { return KEY_PACKS.indexOf(id) >= 0; },
     setVolume(v) {
       volume = v;
       if (master) master.gain.value = v;
     },
     setPack(p) { pack = p; },
+    keyPitch,
 
-    /** Tiếng bước chân (mỗi step) */
-    step(pitch) {
+    /** Tiếng bước chân (mỗi step). opts: {label, pan} */
+    step(pitch, opts) {
       if (!ctx) return;
       const now = ctx.currentTime;
       if (now - lastStep < 0.04) return;
       lastStep = now;
       const p = pitch || 1;
+      const o = opts || {};
+      if (KEY_PACKS.indexOf(pack) >= 0) {
+        const label = o.label;
+        const wide = label && WIDE.indexOf(label) >= 0;
+        keyVoice(pack, p * keyPitch(label), !!wide, 0.85 + Math.random() * 0.15, o.pan || 0, 0, false, false);
+        return;
+      }
       switch (pack) {
         case 'chocolate':
           tone(210 * p, 'sine', 0.003, 0.11, 0.55, 90 * p);
@@ -690,13 +789,35 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
           noise(0.01, 0.15, 0.45, 'lowpass', 380);
           tone(95 * p, 'sawtooth', 0.01, 0.15, 0.16, 55 * p);
           break;
-        default: // keyboard — thock + click
-          noise(0.001, 0.022, 0.5, 'highpass', 2600, 0.7);
-          tone(560 * p, 'square', 0.001, 0.04, 0.13, 300 * p);
-          tone(2300 * p, 'sine', 0.001, 0.018, 0.1);
-          tone(150 * p, 'sine', 0.002, 0.07, 0.35, 90 * p);
+        default:
       }
     },
+
+    /** Tiếng gõ khi người chơi bấm / nhả phím thật (WASD, Space…). Dùng đúng loại switch đã chọn. */
+    keyType(down, key) {
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      if (down && now - lastType < 0.012) return;
+      lastType = down ? now : lastType;
+      const kind = KEY_PACKS.indexOf(pack) >= 0 ? pack : 'keyboard';
+      const k = key && key.length === 1 ? key.toUpperCase() : key === ' ' ? 'Space' : key === 'Enter' ? 'Enter' : key === 'Tab' ? 'Tab' : key === 'Backspace' ? '⌫' : key === 'Shift' ? 'Shift' : '';
+      const wide = WIDE.indexOf(k) >= 0;
+      const p = keyPitch(k) * (0.97 + Math.random() * 0.06);
+      keyVoice(kind, p, wide, down ? 0.65 : 0.85, (Math.random() - 0.5) * 0.3, 0, !down, down);
+    },
+
+    /** Nghe thử: gõ chuỗi phím như đang đánh máy */
+    demo(kind) {
+      if (!ctx) return;
+      const word = ['T', 'H', 'I', 'N', 'K', 'Shift', 'F', 'A', 'S', 'T', 'Enter'];
+      let t = 0;
+      const k = KEY_PACKS.indexOf(kind) >= 0 ? kind : KEY_PACKS.indexOf(pack) >= 0 ? pack : 'keyboard';
+      word.forEach((ch, i) => {
+        t += 0.09 + Math.random() * 0.07 + (ch === 'Enter' ? 0.12 : 0);
+        keyVoice(k, keyPitch(ch) * (0.97 + Math.random() * 0.06), WIDE.indexOf(ch) >= 0, 0.8 + Math.random() * 0.2, (i / word.length - 0.5) * 0.5, t, false, false);
+      });
+    },
+
     jump() { tone(300, 'sine', 0.005, 0.12, 0.22, 640); },
     land() { noise(0.002, 0.06, 0.25, 'lowpass', 500); tone(120, 'sine', 0.002, 0.08, 0.3, 70); },
     win() { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 'triangle', 0.005, 0.28, 0.32, 0, i * 0.075)); },
@@ -714,6 +835,17 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
     laser() { noise(0.002, 0.25, 0.4, 'bandpass', 3000, 2); tone(1800, 'sawtooth', 0.002, 0.25, 0.2, 200); },
     checkpoint() { tone(740, 'triangle', 0.004, 0.14, 0.22); tone(988, 'triangle', 0.004, 0.2, 0.22, 0, 0.08); },
     vanish() { tone(340, 'triangle', 0.003, 0.12, 0.12, 160); },
+
+    /** Dùng cho kiểm thử: gắn AudioContext (ví dụ OfflineAudioContext) để render âm thanh ra mảng mẫu */
+    _inject(c) {
+      ctx = c;
+      master = c.createGain();
+      master.gain.value = volume;
+      master.connect(c.destination);
+      noiseBuf = makeNoise(c);
+      lastStep = -1;
+      lastType = -1;
+    },
   });
 })();
 
@@ -1485,7 +1617,7 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
       }
       const box = {
         x0: r.x0, y0: bot, z0: r.z0, x1: r.x1, y1: top, z1: r.z1,
-        kind: o.kind || 'key', stage: this.s, pr: [ps, pe], lr, active: true, stamp: 0,
+        kind: o.kind || 'key', label: o.label || null, stage: this.s, pr: [ps, pe], lr, active: true, stamp: 0,
         ck: o.ck || null, pad: o.pad || null,
       };
       this.w.addStatic(box);
@@ -2695,12 +2827,16 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
           if (!this.jumpHeld) this.jumpQueued = true;
           this.jumpHeld = true;
         }
-        if (!e.repeat) this.handlers.forEach((h) => h(k, e));
+        if (!e.repeat) {
+          this.handlers.forEach((h) => h(k, e));
+          if (this.typing) this.typing(true, e.key, e);
+        }
         this.keys.add(k);
       });
       window.addEventListener('keyup', (e) => {
         const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
         if (k === ' ') this.jumpHeld = false;
+        if (this.keys.has(k) && this.typing && !typing(e)) this.typing(false, e.key, e);
         this.keys.delete(k);
       });
       window.addEventListener('blur', () => { this.keys.clear(); this.jumpHeld = false; });
@@ -3047,14 +3183,26 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
       const g = this.g;
       const st = g.state.settings;
       const sh = this.shell('⚙️ Cài đặt', '#b9c4d6', '#7a8aa6');
-      sh.body.appendChild(el('div', 'note', '<b>Âm thanh bước chân (ASMR)</b>'));
-      const rd = el('div', 'radio');
-      D.PACKS.forEach((p) => {
-        const c = el('button', 'chip' + (st.pack === p.id ? ' on' : ''), p.name);
-        c.onclick = () => { g.setPack(p.id); this.render(true); };
-        rd.appendChild(c);
+      const packRow = (title, group) => {
+        sh.body.appendChild(el('div', 'note', `<b>${title}</b>`));
+        const rd = el('div', 'radio');
+        D.PACKS.filter((p) => (p.group === 'key') === group).forEach((p) => {
+          const c = el('button', 'chip' + (st.pack === p.id ? ' on' : ''), p.name);
+          c.onclick = () => { g.setPack(p.id); this.render(true); };
+          rd.appendChild(c);
+        });
+        sh.body.appendChild(rd);
+      };
+      packRow('⌨️ Tiếng bàn phím (mỗi bước chân là một lần gõ phím — bấm để nghe thử)', true);
+      packRow('Âm thanh bước chân ASMR khác', false);
+      sh.body.appendChild(el('div', 'note', 'Phím dài (Shift, Enter, Caps, Tab) nghe trầm hơn và có tiếng rung thanh cân bằng; mỗi phím có cao độ riêng.'));
+      const typing = el('div', 'radio');
+      [['⌨️ Tiếng gõ khi bấm phím điều khiển: Bật', true], ['Tắt', false]].forEach(([label, v]) => {
+        const c = el('button', 'chip' + (st.typing !== false === v ? ' on' : ''), label);
+        c.onclick = () => { g.setTyping(v); this.render(true); };
+        typing.appendChild(c);
       });
-      sh.body.appendChild(rd);
+      sh.body.appendChild(typing);
       const slider = (label, min, max, step, val, fn) => {
         const wrap = el('div', '', `<div class="note"><b>${label}</b></div>`);
         const r = el('input');
@@ -3159,7 +3307,7 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
       treadOwned: [0], treadEq: 0,
       trailsOwned: [], trailEq: -1, aurasOwned: [], auraEq: -1,
       maxStage: 0, steps: 0, totalWins: 0, deaths: 0, helped: false,
-      settings: { pack: 'keyboard', vol: 0.7, sens: 1, shadows: true },
+      settings: { pack: 'keyboard', vol: 0.7, sens: 1, shadows: true, typing: true },
     };
   }
 
@@ -3339,7 +3487,18 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
         ui.close();
         teleportCk(world.lobbyCk, true);
       },
-      setPack(id) { state.settings.pack = id; A.setPack(id); A.resume(); A.step(1); game.save(); },
+      setPack(id) {
+        state.settings.pack = id;
+        A.setPack(id);
+        A.resume();
+        if (A.isKeyPack(id)) A.demo(id); else A.step(1);
+        game.save();
+      },
+      setTyping(v) {
+        state.settings.typing = v;
+        if (v) { A.resume(); A.keyType(true, 'w'); A.keyType(false, 'w'); }
+        game.save();
+      },
       setVolume(v) { state.settings.vol = v; A.setVolume(v); game.save(); },
       setSens(v) { state.settings.sens = v; input.sens = v; game.save(); },
       setShadows(v) {
@@ -3486,8 +3645,8 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
       state.speed += gain;
       state.steps++;
       rt.foot ^= 1;
-      A.step((rt.foot ? 1.0 : 0.93) * (0.94 + Math.random() * 0.12));
       const g = player.ground;
+      A.step((rt.foot ? 1.0 : 0.95) * (0.97 + Math.random() * 0.06), { label: g && g.label, pan: rt.foot ? 0.12 : -0.12 });
       if (g && g.pr) world.press(g);
       const gcol = g && g.kind === 'key' ? [1, 1, 1] : [1, 0.9, 0.95];
       puff(player.pos.x, player.pos.y, player.pos.z, gcol, 3);
@@ -3612,6 +3771,7 @@ body.touch .mbtn.dot::after { width: 18px; height: 18px; font-size: 12px; right:
 
     // ------------------------------------------------------------ khởi tạo trạng thái
     A.setPack(state.settings.pack);
+    input.typing = (down, key) => { if (state.settings.typing && !rt.dying) A.keyType(down, key); };
     A.setVolume(state.settings.vol);
     input.sens = state.settings.sens;
     if (!state.settings.shadows) game.setShadows(false);

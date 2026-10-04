@@ -335,12 +335,16 @@
           if (!this.jumpHeld) this.jumpQueued = true;
           this.jumpHeld = true;
         }
-        if (!e.repeat) this.handlers.forEach((h) => h(k, e));
+        if (!e.repeat) {
+          this.handlers.forEach((h) => h(k, e));
+          if (this.typing) this.typing(true, e.key, e);
+        }
         this.keys.add(k);
       });
       window.addEventListener('keyup', (e) => {
         const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
         if (k === ' ') this.jumpHeld = false;
+        if (this.keys.has(k) && this.typing && !typing(e)) this.typing(false, e.key, e);
         this.keys.delete(k);
       });
       window.addEventListener('blur', () => { this.keys.clear(); this.jumpHeld = false; });

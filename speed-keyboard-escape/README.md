@@ -30,7 +30,10 @@ Nguồn nghiên cứu: wiki cộng đồng, các bài hướng dẫn (Sportskeed
 
 **Lấy từ game gốc**
 
-- Thế giới bàn phím khổng lồ làm từ kẹo/chocolate; mỗi bước chân cộng Speed kèm tiếng click ASMR; có gói âm thanh bước chân **Keyboard / Chocolate / Water / Bubbles / Lava** (chọn trong Cài đặt).
+- Thế giới bàn phím khổng lồ làm từ kẹo/chocolate; mỗi bước chân cộng Speed kèm tiếng click ASMR; có nhiều gói âm thanh (chọn trong Cài đặt):
+  - **Tiếng bàn phím cơ**: Blue (clacky), Brown (tactile), Red (linear), Thocky, Typewriter, Laptop. Mỗi bước là một lần gõ phím có tiếng nhấn xuống và tiếng nhả lên; phím dài (Shift/Enter/Caps/Tab) trầm hơn kèm tiếng rung thanh cân bằng; mỗi phím có cao độ riêng theo vị trí QWERTY.
+  - **Tiếng gõ khi bấm phím điều khiển** (W A S D, Space…): bật/tắt trong Cài đặt.
+  - ASMR khác: Chocolate / Water / Bubbles / Lava.
 - **13 stage**: Gummy Gateway → Candy Cane Walk → Chocolate Creek → Marshmallow Maze → Caramel Canyon → Lollipop Ledge → Fudge Falls → Sprinkle Sprint → Truffle Tunnel → **Brainrot Boulevard** → Waffle Warp → Sugar Rush → Cocoa Crown.
 - Cuối mỗi stage có **bệ vàng WIN** (phím vàng) → nhận Wins **+1, +3, +10, +20, +60, +100, +150, +300, +500, +1.000, +2.500, +10.000, +25.000** rồi bị teleport về Spawn.
 - **Treadmill** (đứng chạy tại chỗ để cày Speed): Chocolate ×1 (miễn phí), Golden ×3, Diamond ×9, Candy ×25, Admin ×100.
@@ -46,7 +49,7 @@ Nguồn nghiên cứu: wiki cộng đồng, các bài hướng dẫn (Sportskeed
 
 - Hệ số Trail/Aura, giá Treadmill (game gốc bán bằng Robux → ở đây mua bằng Wins), bảng Level↔Speed, bố cục từng stage, đường cong tốc độ chạy theo Speed.
 - Không có multiplayer thật; bảng xếp hạng chứa **bot mô phỏng**. Không có quest/medal/code/pet.
-- Âm thanh được tổng hợp bằng WebAudio (không dùng file âm thanh của game gốc); không dùng tài sản (asset) gốc của Roblox.
+- Âm thanh được tổng hợp bằng WebAudio (tiếng bàn phím cũng là tổng hợp, không dùng mẫu thu âm thật, nên gần giống chứ không phải bản ghi bàn phím thật); không dùng tài sản (asset) gốc của Roblox.
 
 ## Cấu trúc mã
 
