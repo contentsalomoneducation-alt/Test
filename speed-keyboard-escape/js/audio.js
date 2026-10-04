@@ -7,6 +7,8 @@
   let master = null;
   let noiseBuf = null;
   let volume = 0.7;
+  let muted = false;
+  const GAIN = 1.5; // hệ số khuếch đại tổng để tiếng click rõ hơn
   let pack = 'keyboard';
   let lastStep = -1;
   let lastType = -1;
@@ -18,28 +20,72 @@
     return b;
   }
 
+  /**
+   * master -> soft clipper -> loa.
+   * KHÔNG dùng DynamicsCompressor: nó làm các tiếng click ngắn nhỏ đi ~4 lần (đã đo).
+   * Soft clipper trong suốt dưới 0.75, chỉ bo tròn đỉnh để không rè khi nhiều tiếng chồng nhau.
+   */
+  function buildChain(c) {
+    const m = c.createGain();
+    const pre = c.createGain();
+    pre.gain.value = 0.5; // mở rộng miền vào của WaveShaper ra [-2, 2]
+    const ws = c.createWaveShaper();
+    const N = 2048;
+    const curve = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      const x = ((i / (N - 1)) * 2 - 1) * 2; // -2..2
+      const a = Math.abs(x);
+      const y = a <= 0.75 ? a : 0.75 + 0.25 * Math.tanh((a - 0.75) / 0.25);
+      curve[i] = (x < 0 ? -y : y) / 2;
+    }
+    ws.curve = curve;
+    try { ws.oversample = '2x'; } catch (e) { /* bỏ qua */ }
+    const post = c.createGain();
+    post.gain.value = 2;
+    m.connect(pre);
+    pre.connect(ws);
+    ws.connect(post);
+    post.connect(c.destination);
+    return m;
+  }
+
   function init() {
     if (ctx) return;
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     try {
       ctx = new AC();
-      master = ctx.createGain();
-      master.gain.value = volume;
-      const comp = ctx.createDynamicsCompressor();
-      comp.threshold.value = -14;
-      comp.ratio.value = 6;
-      master.connect(comp);
-      comp.connect(ctx.destination);
+      master = buildChain(ctx);
+      master.gain.value = muted ? 0 : volume * GAIN;
       noiseBuf = makeNoise(ctx);
+      ctx.onstatechange = () => { if (SKE.audio.onState) SKE.audio.onState(ctx.state); };
     } catch (e) {
       ctx = null;
     }
   }
 
+  /** Mẹo mở khoá iOS/Safari: phát 1 mẫu im lặng ngay trong cử chỉ người dùng */
+  function silentKick() {
+    try {
+      const s = ctx.createBufferSource();
+      s.buffer = ctx.createBuffer(1, 1, 22050);
+      s.connect(ctx.destination);
+      s.start(0);
+    } catch (e) { /* bỏ qua */ }
+  }
+
   function resume() {
     init();
-    if (ctx && ctx.state === 'suspended') ctx.resume();
+    if (!ctx) return;
+    // iOS 16.4+: bỏ qua công tắc im lặng của máy
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* bỏ qua */ }
+    if (ctx.state !== 'running') {
+      try {
+        const p = ctx.resume();
+        if (p && p.catch) p.catch(() => {});
+      } catch (e) { /* bỏ qua */ }
+      silentKick();
+    }
   }
 
   function out(node, pan) {
@@ -166,8 +212,15 @@
     isKeyPack(id) { return KEY_PACKS.indexOf(id) >= 0; },
     setVolume(v) {
       volume = v;
-      if (master) master.gain.value = v;
+      if (master) master.gain.value = muted ? 0 : v * GAIN;
     },
+    setMuted(m) {
+      muted = !!m;
+      if (master) master.gain.value = muted ? 0 : volume * GAIN;
+    },
+    get muted() { return muted; },
+    /** 'none' (chưa tạo) | 'suspended' (bị chặn) | 'running' | 'interrupted'… */
+    status() { return ctx ? ctx.state : 'none'; },
     setPack(p) { pack = p; },
     keyPitch,
 
@@ -250,11 +303,10 @@
     vanish() { tone(340, 'triangle', 0.003, 0.12, 0.12, 160); },
 
     /** Dùng cho kiểm thử: gắn AudioContext (ví dụ OfflineAudioContext) để render âm thanh ra mảng mẫu */
-    _inject(c) {
+    _inject(c, raw) {
       ctx = c;
-      master = c.createGain();
-      master.gain.value = volume;
-      master.connect(c.destination);
+      if (raw) { master = c.createGain(); master.connect(c.destination); } else master = buildChain(c);
+      master.gain.value = volume * GAIN;
       noiseBuf = makeNoise(c);
       lastStep = -1;
       lastType = -1;

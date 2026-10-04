@@ -51,6 +51,13 @@ Nguồn nghiên cứu: wiki cộng đồng, các bài hướng dẫn (Sportskeed
 - Không có multiplayer thật; bảng xếp hạng chứa **bot mô phỏng**. Không có quest/medal/code/pet.
 - Âm thanh được tổng hợp bằng WebAudio (tiếng bàn phím cũng là tổng hợp, không dùng mẫu thu âm thật, nên gần giống chứ không phải bản ghi bàn phím thật); không dùng tài sản (asset) gốc của Roblox.
 
+## Không nghe thấy tiếng?
+
+- Trình duyệt chỉ cho phát âm thanh sau khi bạn **bấm / chạm / nhấn phím** trong trang. Game tự mở khoá ở mọi loại thao tác; nếu vẫn bị chặn, nút **"🔇 Bấm để bật âm thanh"** (góc trái, dưới các ô thống kê) sẽ nhấp nháy — bấm vào là bật và phát thử tiếng gõ.
+- iPhone/iPad: tắt công tắc im lặng, tăng âm lượng. Trong Cài đặt có dòng "Trạng thái âm thanh" và nút **Thử âm thanh**.
+- `dist/keyboard-sounds-demo.wav` là bản render sẵn của 6 kiểu bàn phím (gõ "THINK FAST") để nghe thử ngoài game.
+- Lưu ý kỹ thuật: không dùng `DynamicsCompressorNode` vì nó làm tiếng click ngắn nhỏ đi ~4 lần (đã đo); thay bằng bộ cắt mềm (`WaveShaper`).
+
 ## Cấu trúc mã
 
 ```

@@ -16,7 +16,7 @@
       treadOwned: [0], treadEq: 0,
       trailsOwned: [], trailEq: -1, aurasOwned: [], auraEq: -1,
       maxStage: 0, steps: 0, totalWins: 0, deaths: 0, helped: false,
-      settings: { pack: 'keyboard', vol: 0.7, sens: 1, shadows: true, typing: true },
+      settings: { pack: 'keyboard', vol: 0.7, sens: 1, shadows: true, typing: true, mute: false },
     };
   }
 
@@ -202,6 +202,35 @@
         A.resume();
         if (A.isKeyPack(id)) A.demo(id); else A.step(1);
         game.save();
+      },
+      /** Nút âm thanh trên HUD: chưa bật -> mở khoá + phát thử; đã bật -> tắt/mở tiếng */
+      soundButton() {
+        // bấm đầu tiên (vừa mở khoá âm thanh trong cùng cử chỉ) chỉ phát thử, không coi là tắt tiếng
+        const justUnlocked = performance.now() - (rt.unlockT || -1e9) < 800;
+        A.resume();
+        if (A.status() !== 'running' || justUnlocked) { game.soundTest(); return; }
+        const m = !A.muted;
+        A.setMuted(m);
+        state.settings.mute = m;
+        if (!m) A.keyType(true, 'w');
+        game.save();
+        ui.hud();
+      },
+      soundTest() {
+        A.resume();
+        state.settings.mute = false;
+        A.setMuted(false);
+        // chờ context chạy rồi phát chuỗi gõ phím mẫu
+        const go = () => { A.demo(); ui.hud(); };
+        if (A.status() === 'running') go();
+        else {
+          let tries = 0;
+          const iv = setInterval(() => {
+            tries++;
+            if (A.status() === 'running') { clearInterval(iv); go(); }
+            else if (tries > 15) { clearInterval(iv); ui.toast('Trình duyệt vẫn chặn âm thanh. Hãy bật loa / tắt chế độ im lặng rồi bấm lại.', 'bad', 4); }
+          }, 100);
+        }
       },
       setTyping(v) {
         state.settings.typing = v;
@@ -480,6 +509,15 @@
 
     // ------------------------------------------------------------ khởi tạo trạng thái
     A.setPack(state.settings.pack);
+    A.setMuted(!!state.settings.mute);
+    // Mở khoá âm thanh ở MỌI loại cử chỉ (chuột, chạm, bàn phím) — mobile chỉ tính touchend/pointerup
+    ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'touchstart', 'touchend', 'keydown'].forEach((ev) => {
+      document.addEventListener(ev, () => {
+        if (A.status() !== 'running') { A.resume(); rt.unlockT = performance.now(); ui.hud(); }
+      }, { capture: true, passive: true });
+    });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) ui.hud(); });
+    A.onState = (s) => { if (s === 'running') rt.unlockT = performance.now(); ui.hud(); };
     input.typing = (down, key) => { if (state.settings.typing && !rt.dying) A.keyType(down, key); };
     A.setVolume(state.settings.vol);
     input.sens = state.settings.sens;

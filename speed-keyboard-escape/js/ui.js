@@ -6,6 +6,8 @@
   const D = SKE.data;
   const $ = U.$;
   const el = U.el;
+  const A_status = () => (SKE.audio ? SKE.audio.status() : 'none');
+  const A_muted = () => !!(SKE.audio && SKE.audio.muted);
 
   class UI {
     constructor(game) {
@@ -21,6 +23,7 @@
       $('#bStages').onclick = () => this.toggle('stages');
       $('#bBoard').onclick = () => this.toggle('board');
       $('#bSet').onclick = () => this.toggle('settings');
+      $('#sndBtn').onclick = () => this.g.soundButton();
     }
 
     // ------------------------------------------------------------ HUD
@@ -46,6 +49,11 @@
         $('#lvlBar').style.width = '100%';
         $('#lvlNext').textContent = 'MAX REBIRTH';
       }
+      const snd = $('#sndBtn');
+      const st = A_status();
+      if (st !== 'running') { snd.className = 'click off'; snd.textContent = '🔇 Bấm để bật âm thanh'; }
+      else if (A_muted()) { snd.className = 'click muted'; snd.textContent = '🔇 Đã tắt tiếng'; }
+      else { snd.className = 'click'; snd.textContent = '🔊 Âm thanh'; }
       $('#bReb').classList.toggle('dot', !!next && lvl >= next.level);
       $('#bShop').classList.toggle('dot', g.canAffordSomething());
     }
@@ -295,6 +303,12 @@
       const g = this.g;
       const st = g.state.settings;
       const sh = this.shell('⚙️ Cài đặt', '#b9c4d6', '#7a8aa6');
+      const as = A_status();
+      const asRow = el('div', 'row', `<span>Trạng thái âm thanh: <b>${as === 'running' ? (A_muted() ? 'đang tắt tiếng' : 'đang bật') : 'chưa bật (trình duyệt đang chặn)'}</b></span>`);
+      const test = el('button', 'btn ' + (as === 'running' ? '' : 'pink'), '🔊 Thử âm thanh');
+      test.onclick = () => { g.soundTest(); setTimeout(() => this.render(true), 400); };
+      asRow.appendChild(test);
+      sh.body.appendChild(asRow);
       const packRow = (title, group) => {
         sh.body.appendChild(el('div', 'note', `<b>${title}</b>`));
         const rd = el('div', 'radio');
