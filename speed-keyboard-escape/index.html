@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#ff9ec7">
+<title>+1 Speed Keyboard Escape</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c" tabindex="0"></canvas>
+
+<div id="hud">
+  <div id="stats">
+    <div class="pill" id="pSpeed"><div class="ic">⚡</div><div class="tx"><span class="lb">Speed</span><span class="v stroke" id="vSpeed">0</span></div></div>
+    <div class="pill" id="pWins"><div class="ic">🏆</div><div class="tx"><span class="lb">Wins</span><span class="v stroke" id="vWins">0</span></div></div>
+    <div class="pill" id="pReb"><div class="ic">🔄</div><div class="tx"><span class="lb">Rebirths</span><span class="v stroke" id="vReb">0</span></div></div>
+    <div id="stepInfo">+1 / step</div>
+  </div>
+
+  <div id="lvl">
+    <div id="lvlRow">
+      <div id="lvlText" class="stroke">Lv 1</div>
+      <div id="lvlBarWrap"><div id="lvlBar"></div></div>
+    </div>
+    <div id="lvlNext" class="stroke"></div>
+    <div id="stageTag"></div>
+  </div>
+
+  <div id="menu">
+    <button class="mbtn click" id="bShop"><kbd>B</kbd><span class="e">🛒</span>Shop</button>
+    <button class="mbtn click" id="bReb"><kbd>R</kbd><span class="e">🔄</span>Rebirth</button>
+    <button class="mbtn click" id="bStages"><kbd>T</kbd><span class="e">🏁</span>Stages</button>
+    <button class="mbtn click" id="bBoard"><kbd>Tab</kbd><span class="e">📋</span>Top</button>
+    <button class="mbtn click" id="bSet"><kbd>Esc</kbd><span class="e">⚙️</span>Cài đặt</button>
+  </div>
+
+  <div id="toasts"></div>
+  <div id="popups"></div>
+  <div id="banner"><div class="s1 stroke" id="bn1"></div><div class="s2 stroke" id="bn2"></div></div>
+  <div id="hint">WASD / ←↑↓→ di chuyển · Space nhảy · Kéo chuột xoay camera · Lăn chuột hoặc I/O để zoom · Tab bảng xếp hạng</div>
+</div>
+
+<div id="touch">
+  <div id="stick"><div id="knob"></div></div>
+  <button id="jumpBtn">JUMP</button>
+</div>
+
+<div id="flash"></div>
+<div id="fade"></div>
+<div id="modal"></div>
+
+<div id="loading">
+  <div>
+    <h1 class="stroke">+1 Speed<br>Keyboard Escape</h1>
+    <p>Đang dựng bàn phím kẹo khổng lồ…</p>
+    <div class="spin"></div>
+  </div>
+</div>
+<div id="err"></div>
+
+<script>
+  window.addEventListener('error', function (e) {
+    var el = document.getElementById('err');
+    el.style.display = 'block';
+    el.textContent += (e.message || e.error) + ' @ ' + (e.filename || '') + ':' + (e.lineno || '') + '\n';
+  });
+</script>
+<script src="vendor/three.min.js"></script>
+<script src="js/util.js"></script>
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/world.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/player.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
